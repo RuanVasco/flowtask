@@ -37,4 +37,12 @@ enum MissingManagerBehavior: string
 {
     case BLOCK = 'block';
     case SKIP = 'skip';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::BLOCK => __('Block the workflow', 'flowtask'),
+            self::SKIP  => __('Skip the step', 'flowtask'),
+        };
+    }
 }

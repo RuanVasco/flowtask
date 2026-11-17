@@ -36,4 +36,14 @@ enum NodeType: string
     case TASK = 'task';
     case APPROVAL = 'approval';
     case END = 'end';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::START    => __('Start', 'flowtask'),
+            self::TASK     => __('Task', 'flowtask'),
+            self::APPROVAL => __('Approval', 'flowtask'),
+            self::END      => __('End', 'flowtask'),
+        };
+    }
 }

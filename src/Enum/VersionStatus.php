@@ -38,4 +38,13 @@ enum VersionStatus: string
     case DRAFT = 'draft';
     case PUBLISHED = 'published';
     case ARCHIVED = 'archived';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::DRAFT     => __('Draft', 'flowtask'),
+            self::PUBLISHED => __('Published', 'flowtask'),
+            self::ARCHIVED  => __('Archived', 'flowtask'),
+        };
+    }
 }

@@ -43,4 +43,30 @@ enum TransitionCondition: string
     case APPROVED = 'approved';
     /** The validation of an APPROVAL step was refused. */
     case REJECTED = 'rejected';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::ALWAYS    => __('Always', 'flowtask'),
+            self::COMPLETED => __('Completed', 'flowtask'),
+            self::APPROVED  => __('Approved', 'flowtask'),
+            self::REJECTED  => __('Rejected', 'flowtask'),
+        };
+    }
+
+    /**
+     * Conditions a step of the given type can fire. A step lacking any of
+     * them cannot be published (spec 001, definition management rules).
+     *
+     * @return list<self>
+     */
+    public static function forSource(NodeType $type): array
+    {
+        return match ($type) {
+            NodeType::START    => [self::ALWAYS],
+            NodeType::TASK     => [self::COMPLETED],
+            NodeType::APPROVAL => [self::APPROVED, self::REJECTED],
+            NodeType::END      => [],
+        };
+    }
 }
