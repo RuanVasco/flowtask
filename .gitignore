@@ -1,0 +1,12 @@
+dist/
+node_modules/
+vendor/
+.gh_token
+*.min.*
+var
+/.vscode/
+/.idea/
+
+# Claude Code local files
+.claude/settings.local.json
+.claude/worktrees/

@@ -1,0 +1,47 @@
+<root>
+   <name>Flowtask</name>
+   <key>flowtask</key>
+   <!-- stable, beta, development, alpha, ... -->
+   <state>development</state>
+   <logo>https://raw.githubusercontent.com/RuanVasco/flowtask/main/flowtask.png</logo>
+   <description>
+      <short>
+         <en>Workflows inside tickets: activities assigned per actor, approvals and conditional steps.</en>
+         <pt>Workflows dentro do chamado: atividades por ator, aprovações e etapas condicionais.</pt>
+      </short>
+      <long>
+         <en>Flowtask runs workflows inside GLPI tickets. Each step becomes a ticket task or validation assigned to the right actor (user, group, requester manager or profile), and the next step starts automatically when the previous one is done, following the configured conditions.</en>
+         <pt>O Flowtask executa workflows dentro dos chamados do GLPI. Cada etapa vira uma tarefa ou validação do chamado atribuída ao ator certo (usuário, grupo, gestor do requerente ou perfil), e a próxima etapa começa automaticamente quando a anterior termina, seguindo as condições configuradas.</pt>
+      </long>
+   </description>
+   <homepage>https://github.com/RuanVasco/flowtask</homepage>
+   <download>https://github.com/RuanVasco/flowtask/releases</download>
+   <issues>https://github.com/RuanVasco/flowtask/issues</issues>
+   <readme>https://github.com/RuanVasco/flowtask/blob/main/README.md</readme>
+   <authors>
+      <author>Ruan Vasconcelos</author>
+   </authors>
+   <versions>
+      <version>
+         <num>0.1.0</num>
+         <compatibility>~12.0.0</compatibility>
+      </version>
+   </versions>
+   <langs>
+      <lang>en_GB</lang>
+      <lang>pt_BR</lang>
+   </langs>
+   <license>GPL v3+</license>
+   <tags>
+      <en>
+         <tag>workflow</tag>
+         <tag>ticket</tag>
+         <tag>approval</tag>
+      </en>
+      <pt>
+         <tag>workflow</tag>
+         <tag>chamado</tag>
+         <tag>aprovação</tag>
+      </pt>
+   </tags>
+</root>

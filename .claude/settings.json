@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& '.claude\\strip-bom.ps1'",
+            "shell": "powershell",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}

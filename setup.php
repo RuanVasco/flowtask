@@ -1,0 +1,101 @@
+<?php
+
+/**
+ * -------------------------------------------------------------------------
+ * Flowtask plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Flowtask.
+ *
+ * Flowtask is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Flowtask is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Flowtask. If not, see <https://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2026 by Ruan Vasconcelos.
+ * @license   GPLv3+ https://www.gnu.org/licenses/gpl-3.0.html
+ * @link      https://github.com/RuanVasco/flowtask
+ * -------------------------------------------------------------------------
+ */
+
+/** @phpstan-ignore theCodingMachineSafe.function (safe to assume this isn't already defined) */
+define('PLUGIN_FLOWTASK_VERSION', '0.1.0');
+
+// Minimal GLPI version, inclusive
+/** @phpstan-ignore theCodingMachineSafe.function (safe to assume this isn't already defined) */
+define("PLUGIN_FLOWTASK_MIN_GLPI_VERSION", "12.0.0");
+
+// Maximum GLPI version, exclusive
+/** @phpstan-ignore theCodingMachineSafe.function (safe to assume this isn't already defined) */
+define("PLUGIN_FLOWTASK_MAX_GLPI_VERSION", "12.0.99");
+
+/**
+ * Init hooks of the plugin.
+ * REQUIRED
+ */
+function plugin_init_flowtask(): void {}
+
+/**
+ * Get the name and the version of the plugin
+ * REQUIRED
+ *
+ * @return array{
+ *      name: string,
+ *      version: string,
+ *      author: string,
+ *      license: string,
+ *      homepage: string,
+ *      requirements: array{
+ *          glpi: array{
+ *              min: string,
+ *              max: string,
+ *          }
+ *      }
+ * }
+ */
+function plugin_version_flowtask(): array
+{
+    return [
+        'name'           => 'Flowtask',
+        'version'        => PLUGIN_FLOWTASK_VERSION,
+        'author'         => 'Ruan Vasconcelos',
+        'license'        => 'GPLv3+',
+        'homepage'       => 'https://github.com/RuanVasco/flowtask',
+        'requirements'   => [
+            'glpi' => [
+                'min' => PLUGIN_FLOWTASK_MIN_GLPI_VERSION,
+                'max' => PLUGIN_FLOWTASK_MAX_GLPI_VERSION,
+            ],
+        ],
+    ];
+}
+
+/**
+ * Check pre-requisites before install
+ * OPTIONAL
+ */
+function plugin_flowtask_check_prerequisites(): bool
+{
+    return true;
+}
+
+/**
+ * Check configuration process
+ * OPTIONAL
+ *
+ * @param bool $verbose Whether to display message on failure. Defaults to false.
+ */
+function plugin_flowtask_check_config(bool $verbose = false): bool
+{
+    return true;
+}
