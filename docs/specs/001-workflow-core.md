@@ -59,6 +59,7 @@ Formulei is used only as a design reference; the code is rewritten.
 12. **AC-12** A ticket runs at most one workflow instance. A ticket whose category is linked to a workflow starts exactly one instance; changing the category of a ticket that already has an instance does not start another one.
 13. **AC-13** While an instance is active, deleting or purging a `TicketTask` or `TicketValidation` created by it is refused with a translatable message.
 14. **AC-14** If a step's task or validation disappears anyway (e.g. removed directly in the database), the instance is flagged stuck with the reason recorded, and nothing is recreated automatically.
+15. **AC-15** A workflow that has instances (running or finished) cannot be purged, and none of its versions can be purged; the refusal shows a translatable message. Such a workflow can only be deactivated.
 
 ## Out of scope (v0.1)
 
@@ -74,7 +75,7 @@ Formulei is used only as a design reference; the code is rewritten.
 ## Stages
 
 1. Data model: tables, item classes, install/uninstall migrations, rights (AC-10, AC-12 at the schema level).
-2. Definition management: forms to create workflows, nodes, transitions, versions and category links (AC-1, AC-2, AC-3).
+2. Definition management: forms to create workflows, nodes, transitions, versions and category links, and the purge guard (AC-1, AC-2, AC-3, AC-15).
 3. Engine: instance start, actor resolution, task and approval steps, transitions, deletion guard and stuck detection (AC-3 to AC-8, AC-12 to AC-14).
 4. Ticket tab with timeline, translations (AC-9, AC-11).
 
@@ -83,3 +84,4 @@ Formulei is used only as a design reference; the code is rewritten.
 - **Trigger:** only by ticket category in v0.1; business rule actions are out of scope.
 - **Deleting workflow-created items:** blocked while the instance is active (AC-13); if they disappear anyway, the instance is flagged stuck (AC-14).
 - **Workflows per ticket:** at most one (AC-12).
+- **Purging a workflow with instances:** refused, so instances never point to a missing version; deactivate it instead (AC-15).
