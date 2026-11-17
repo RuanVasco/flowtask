@@ -1,7 +1,7 @@
 name: "Continuous integration"
 
-# Code coverage is automatically enabled when a `.glpi-coverage.json` file
-# is present at the root of the plugin directory.
+# Code coverage is enabled when a `.glpi-coverage.json` file is present. Note that
+# `{"enabled": false}` does not disable it (jq `//` treats false as missing).
 
 on:
   push:
