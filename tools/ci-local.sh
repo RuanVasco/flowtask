@@ -1,13 +1,32 @@
 #!/usr/bin/env bash
+
 #
-# Runs the same checks as the GitHub CI (glpi-project/plugin-ci-workflows)
-# inside the official GLPI CI images, against a throwaway MySQL.
+# -------------------------------------------------------------------------
+# Flowtask plugin for GLPI
+# -------------------------------------------------------------------------
 #
-# Usage: tools/ci-local.sh [php-version] [glpi-version]
-#   defaults: php 8.3, GLPI 12.0.x
+# LICENSE
 #
-# Set FIX=1 to apply rector, php-cs-fixer and licence header fixes instead of
-# only checking.
+# This file is part of Flowtask.
+#
+# Flowtask is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Flowtask is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Flowtask. If not, see <https://www.gnu.org/licenses/>.
+# -------------------------------------------------------------------------
+# @copyright Copyright (C) 2026 by Ruan Vasconcelos.
+# @license   GPLv3+ https://www.gnu.org/licenses/gpl-3.0.html
+# @link      https://github.com/RuanVasco/flowtask
+# -------------------------------------------------------------------------
+#
 
 set -euo pipefail
 
@@ -46,7 +65,7 @@ FAILED=0
 step() {
     local name="$1"; shift
     if output="$("$@" 2>&1)"; then
-        echo "[ok]   $name"
+        echo "[ok]   $name  $(echo "$output" | sed "s/\x1b\[[0-9;]*m//g" | grep -v "^[[:space:]]*$" | tail -1 | cut -c1-90)"
     else
         echo "[FAIL] $name"
         echo "$output" | tail -40 | sed "s/^/       /"
@@ -58,7 +77,7 @@ if [ "$FIX" = "1" ]; then
     ../../vendor/bin/rector process --no-progress-bar >/dev/null
     PHP_CS_FIXER_IGNORE_ENV=1 php ../../vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --show-progress none >/dev/null
     php ../../bin/console tools:licence_headers_check --no-interaction --plugin=flowtask --fix >/dev/null
-    tar -C "$PLUGIN" --exclude=./vendor --exclude=./var --exclude=./composer.lock -cf - . | tar -C /src -xf -
+    tar -C "$PLUGIN" --exclude=./.git --exclude=./vendor --exclude=./var --exclude=./composer.lock -cf - . | tar -C /src -xf -
     echo "Fixes applied to the working tree."
 fi
 
@@ -82,7 +101,7 @@ sed -i "s/ testdox=\"true\"//gI" phpunit.xml
 step "phpunit" php ../../vendor/bin/phpunit
 
 cd /var/www/glpi
-step "plugin uninstall" bin/console plugin:uninstall --no-interaction --username=glpi flowtask
+step "plugin uninstall" bin/console plugin:uninstall --no-interaction flowtask
 step "uninstall drops tables" php -r "exit((new mysqli(\"db\", \"root\", \"\", \"glpi\"))->query(\"SHOW TABLES LIKE \\\"glpi_plugin_flowtask_%\\\"\")->num_rows);"
 
 exit $FAILED

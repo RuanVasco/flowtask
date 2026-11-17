@@ -23,7 +23,15 @@ Stop with `docker compose -f docker-compose.dev.yml down` (keep the `-v` flag ou
 
 `phpstan`, `php-cs-fixer`, `rector`, `psalm`, `twigcs` and `phpunit` are configured to run from inside a GLPI development checkout (they read `../../vendor` and the GLPI baseline files). CI runs all of them through the official `glpi-project/plugin-ci-workflows`.
 
-To run them locally, clone GLPI (`12.0/bugfixes` branch), run `composer install` in it, and clone or symlink this repository into its `plugins/flowtask` folder.
+To run all of them locally, with Docker only:
+
+```bash
+tools/ci-local.sh            # PHP 8.3, GLPI 12.0.x
+tools/ci-local.sh 8.5        # another PHP version
+FIX=1 tools/ci-local.sh      # apply rector, php-cs-fixer and licence header fixes first
+```
+
+It uses the official GLPI CI images and a throwaway MySQL, installs and activates the plugin, runs PHPUnit, then uninstalls it and checks that no `glpi_plugin_flowtask_*` table is left.
 
 ## Workflow
 
