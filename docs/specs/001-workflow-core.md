@@ -1,6 +1,6 @@
 # 001 - Workflow core (v0.1)
 
-Status: Draft
+Status: Accepted
 
 ## Problem
 
@@ -21,7 +21,7 @@ Formulei is used only as a design reference; the code is rewritten.
 | `WorkflowTransition` + condition | `PluginFlowtaskTransition` with a condition |
 | `WorkflowInstance` | `PluginFlowtaskInstance` linked 1:1 to a `Ticket` |
 | `WorkflowInstanceStep` / active node | `PluginFlowtaskInstanceStep` linked to the created `TicketTask` or `TicketValidation` |
-| Trigger by form | Trigger by ticket category (v0.1); business rules action later |
+| Trigger by form | Trigger by ticket category only |
 | Department | `Group` |
 | User | `User` |
 | Manager (N levels) | Requester's user supervisor (`users.users_id_supervisor`), N levels up |
@@ -56,6 +56,9 @@ Formulei is used only as a design reference; the code is rewritten.
 9. **AC-9** The ticket shows a "Workflow" tab with the timeline: steps done, current step, actor, and dates.
 10. **AC-10** Uninstalling the plugin drops all `glpi_plugin_flowtask_*` tables without touching tickets, tasks or validations already created.
 11. **AC-11** All UI strings are translatable and available in `en_GB` and `pt_BR`.
+12. **AC-12** A ticket runs at most one workflow instance. A ticket whose category is linked to a workflow starts exactly one instance; changing the category of a ticket that already has an instance does not start another one.
+13. **AC-13** While an instance is active, deleting or purging a `TicketTask` or `TicketValidation` created by it is refused with a translatable message.
+14. **AC-14** If a step's task or validation disappears anyway (e.g. removed directly in the database), the instance is flagged stuck with the reason recorded, and nothing is recreated automatically.
 
 ## Out of scope (v0.1)
 
@@ -64,17 +67,19 @@ Formulei is used only as a design reference; the code is rewritten.
 - Timers, SLA per step, HTTP or webhook nodes, notifications beyond GLPI's native ones.
 - Child tickets, transfer between workflows.
 - Conditions on ticket fields or form answers.
+- Starting a workflow from a business rule action (category is the only trigger).
+- More than one workflow per ticket (use child tickets in a later version).
 - GLPI 11 support.
 
 ## Stages
 
-1. Data model: tables, item classes, install/uninstall migrations, rights (AC-10).
+1. Data model: tables, item classes, install/uninstall migrations, rights (AC-10, AC-12 at the schema level).
 2. Definition management: forms to create workflows, nodes, transitions, versions and category links (AC-1, AC-2, AC-3).
-3. Engine: instance start, actor resolution, task and approval steps, transitions (AC-3 to AC-8).
+3. Engine: instance start, actor resolution, task and approval steps, transitions, deletion guard and stuck detection (AC-3 to AC-8, AC-12 to AC-14).
 4. Ticket tab with timeline, translations (AC-9, AC-11).
 
-## Open questions
+## Decisions
 
-- Should a workflow also start from a business rule action, in addition to category?
-- What happens if a technician deletes a task created by the workflow: mark the instance stuck, or recreate the task?
-- Can a ticket run more than one workflow at the same time?
+- **Trigger:** only by ticket category in v0.1; business rule actions are out of scope.
+- **Deleting workflow-created items:** blocked while the instance is active (AC-13); if they disappear anyway, the instance is flagged stuck (AC-14).
+- **Workflows per ticket:** at most one (AC-12).
