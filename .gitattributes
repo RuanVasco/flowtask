@@ -7,7 +7,6 @@
 *.mo binary
 
 # Excluded from release archives
-/.claude export-ignore
 /.github export-ignore
 /docs export-ignore
 /tests export-ignore
