@@ -46,6 +46,8 @@ use User;
 
 final class PurgeTest extends DbTestCase
 {
+    use WorkflowFixtures;
+
     public function testPurgingWorkflowRemovesItsDefinition(): void
     {
         $this->login();
@@ -54,10 +56,8 @@ final class PurgeTest extends DbTestCase
             'name'        => __FUNCTION__,
             'entities_id' => $this->getTestRootEntity(true),
         ]);
-        $version = $this->createItem(WorkflowVersion::class, [
-            'plugin_flowtask_workflows_id' => $workflow->getID(),
-        ]);
-        $start = $this->createNode($version, NodeType::START);
+        $version = $this->createDraft($workflow);
+        $start   = $this->getStartNode($version);
         $end   = $this->createNode($version, NodeType::END);
         $this->createItem(Transition::class, [
             'plugin_flowtask_workflowversions_id' => $version->getID(),
@@ -83,7 +83,7 @@ final class PurgeTest extends DbTestCase
     {
         $this->login();
 
-        $node = $this->createNode($this->createVersion(), NodeType::TASK);
+        $node = $this->createNode($this->createDraft(), NodeType::TASK);
 
         // Two tickets, so a reset-to-0 strategy would hit the unique key on the second purge.
         foreach ([1, 2] as $i) {
@@ -134,35 +134,11 @@ final class PurgeTest extends DbTestCase
         $this->login();
 
         $user = $this->createItem(User::class, ['name' => __FUNCTION__]);
-        $node = $this->createNode($this->createVersion(), NodeType::TASK, ['users_id' => $user->getID()]);
+        $node = $this->createNode($this->createDraft(), NodeType::TASK, ['users_id' => $user->getID()]);
 
         $this->assertTrue($user->delete(['id' => $user->getID()], true));
 
         $node = $this->reloadItem($node);
         $this->assertSame(0, (int) $node->fields['users_id']);
-    }
-
-    private function createVersion(): WorkflowVersion
-    {
-        $workflow = $this->createItem(Workflow::class, [
-            'name'        => $this->getUniqueString(),
-            'entities_id' => $this->getTestRootEntity(true),
-        ]);
-
-        return $this->createItem(WorkflowVersion::class, [
-            'plugin_flowtask_workflows_id' => $workflow->getID(),
-        ]);
-    }
-
-    /**
-     * @param array<string, mixed> $extra
-     */
-    private function createNode(WorkflowVersion $version, NodeType $type, array $extra = []): Node
-    {
-        return $this->createItem(Node::class, [
-            'plugin_flowtask_workflowversions_id' => $version->getID(),
-            'name'                                => $type->name,
-            'node_type'                           => $type->value,
-        ] + $extra);
     }
 }
