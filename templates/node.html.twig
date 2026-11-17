@@ -1,0 +1,98 @@
+{#
+ # -------------------------------------------------------------------------
+ # Flowtask plugin for GLPI
+ # -------------------------------------------------------------------------
+ #
+ # LICENSE
+ #
+ # This file is part of Flowtask.
+ #
+ # Flowtask is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation, either version 3 of the License, or
+ # (at your option) any later version.
+ #
+ # Flowtask is distributed in the hope that it will be useful,
+ # but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ # GNU General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with Flowtask. If not, see <https://www.gnu.org/licenses/>.
+ # -------------------------------------------------------------------------
+ # @copyright Copyright (C) 2026 by Ruan Vasconcelos.
+ # @license   GPLv3+ https://www.gnu.org/licenses/gpl-3.0.html
+ # @link      https://github.com/RuanVasco/flowtask
+ # -------------------------------------------------------------------------
+ #}
+
+{% extends 'generic_show_form.html.twig' %}
+{% import 'components/form/fields_macros.html.twig' as fields %}
+
+{#
+ # Fields with "flowtask-type-*" or "flowtask-actor-*" classes only apply to
+ # those step types or actors; the script below hides the others. The server
+ # resets them anyway (StepConfiguration::normalize()).
+ #}
+{% block form_fields %}
+    {% if item.isNewItem() %}
+        {{ fields.hiddenField('plugin_flowtask_workflowversions_id', item.fields['plugin_flowtask_workflowversions_id']) }}
+    {% endif %}
+    {{ fields.htmlField('', version_link, _n('Workflow version', 'Workflow versions', 1, 'flowtask')) }}
+    {{ fields.textField('name', item.fields['name'], __('Name'), field_options) }}
+
+    {% if is_start %}
+        {{ fields.htmlField('', __('Start', 'flowtask'), _n('Type', 'Types', 1)) }}
+    {% else %}
+        {{ fields.dropdownArrayField('node_type', item.fields['node_type'], node_types, _n('Type', 'Types', 1), field_options) }}
+
+        {{ fields.dropdownArrayField('actor_type', item.fields['actor_type'], actor_types, __('Actor', 'flowtask'), field_options|merge({
+            'display_emptychoice': true,
+            'add_field_class': 'flowtask-conditional flowtask-type-task flowtask-type-approval',
+        })) }}
+        {{ fields.dropdownField('User', 'users_id', item.fields['users_id'], 'User'|itemtype_name, field_options|merge({
+            'right': 'all',
+            'add_field_class': 'flowtask-conditional flowtask-type-task flowtask-type-approval flowtask-actor-user',
+        })) }}
+        {{ fields.dropdownField('Group', 'groups_id', item.fields['groups_id'], 'Group'|itemtype_name, field_options|merge({
+            'add_field_class': 'flowtask-conditional flowtask-type-task flowtask-type-approval flowtask-actor-group',
+        })) }}
+        {{ fields.dropdownField('Profile', 'profiles_id', item.fields['profiles_id'], 'Profile'|itemtype_name, field_options|merge({
+            'add_field_class': 'flowtask-conditional flowtask-type-task flowtask-type-approval flowtask-actor-profile',
+        })) }}
+        {{ fields.numberField('manager_level', item.fields['manager_level'], __('Manager level', 'flowtask'), field_options|merge({
+            'min': 1,
+            'helper': __('1 is the requester supervisor, 2 the supervisor of that supervisor, and so on.', 'flowtask'),
+            'add_field_class': 'flowtask-conditional flowtask-type-task flowtask-type-approval flowtask-actor-requester_manager',
+        })) }}
+        {{ fields.dropdownArrayField('missing_manager_behavior', item.fields['missing_manager_behavior'], behaviors, __('When the manager is missing', 'flowtask'), field_options|merge({
+            'add_field_class': 'flowtask-conditional flowtask-type-task flowtask-type-approval flowtask-actor-requester_manager',
+        })) }}
+        {{ fields.dropdownField('TaskTemplate', 'tasktemplates_id', item.fields['tasktemplates_id'], 'TaskTemplate'|itemtype_name, field_options|merge({
+            'add_field_class': 'flowtask-conditional flowtask-type-task',
+        })) }}
+        {{ fields.dropdownYesNo('solve_ticket', item.fields['solve_ticket'], __('Solve the ticket', 'flowtask'), field_options|merge({
+            'add_field_class': 'flowtask-conditional flowtask-type-end',
+        })) }}
+
+        <script>
+            $(() => {
+                const form = $('select[name="node_type"]').closest('form');
+                const refresh = () => {
+                    const type = form.find('select[name="node_type"]').val();
+                    const actor = form.find('select[name="actor_type"]').val();
+                    form.find('.flowtask-conditional').each((_, element) => {
+                        const classes = Array.from(element.classList);
+                        const types = classes.filter((name) => name.startsWith('flowtask-type-'));
+                        const actors = classes.filter((name) => name.startsWith('flowtask-actor-'));
+                        const visible = types.includes(`flowtask-type-${type}`)
+                            && (actors.length === 0 || actors.includes(`flowtask-actor-${actor}`));
+                        element.classList.toggle('d-none', !visible);
+                    });
+                };
+                form.on('change', 'select[name="node_type"], select[name="actor_type"]', refresh);
+                refresh();
+            });
+        </script>
+    {% endif %}
+{% endblock %}
