@@ -2,6 +2,9 @@ name: "Continuous integration"
 
 # Code coverage is enabled when a `.glpi-coverage.json` file is present. Note that
 # `{"enabled": false}` does not disable it (jq `//` treats false as missing).
+# When enabling it, add back the `coverage-report` job
+# (glpi-project/plugin-ci-workflows coverage-report.yml@v1) with permissions
+# `actions: read`, `contents: read` and `pull-requests: write`.
 
 on:
   push:
@@ -39,13 +42,3 @@ jobs:
       glpi-version: "${{ matrix.glpi-version }}"
       php-version: "${{ matrix.php-version }}"
       db-image: "${{ matrix.db-image }}"
-
-  coverage-report:
-    needs: "ci"
-    permissions:
-      actions: "read"
-      contents: "read"
-      pull-requests: "write"
-    uses: "glpi-project/plugin-ci-workflows/.github/workflows/coverage-report.yml@v1"
-    with:
-      plugin-key: "flowtask"
