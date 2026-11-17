@@ -43,6 +43,19 @@ Formulei is used only as a design reference; the code is rewritten.
 
 `USER`, `GROUP`, `REQUESTER_MANAGER` (level N, behavior when missing: block or skip), `PROFILE`.
 
+### Definition management rules
+
+- Workflows are managed from the ticket category they serve: a "Workflow" tab on the category shows the linked workflow, or offers to create one (already linked to the category) or to link an existing one. **Setup > Workflows** lists every workflow, as one workflow can serve several categories. Everything is guarded by the `plugin_flowtask_workflow` right.
+- Versions stay in the background. The workflow form shows its current version (the draft, or else the published one) with the actions that apply: "Edit" creates a draft, "Publish" publishes it, "Discard draft" drops it. Its steps and transitions tabs show that current version. A versions tab keeps the history.
+- A new workflow starts with a draft. A workflow has at most one draft version at a time. A draft copies the graph (steps and transitions) of the latest published version, or starts with a lone `START` step when there is none. Version numbers increase by one.
+- Steps and transitions can only be added, edited or removed while their version is a draft. The `START` step is created with the draft and cannot be added, edited or removed by hand.
+- A step of type `TASK` or `APPROVAL` needs an actor; a `TASK` step also needs a task template. Fields that do not apply to the chosen type or actor are reset.
+- A transition joins two steps of the same version, cannot loop on a single step, cannot leave an `END` step and cannot enter the `START` step. Its condition must fit the source step: `ALWAYS` from `START`, `COMPLETED` from `TASK`, `APPROVED` or `REJECTED` from `APPROVAL`.
+- Publishing a draft checks that every step has its required outgoing transitions (`START`: `ALWAYS`; `TASK`: `COMPLETED`; `APPROVAL`: `APPROVED` and `REJECTED`), that there is at least one `END` step and that every step is reachable from `START`. On failure nothing changes and every problem is listed. On success the previous published version becomes archived.
+- A ticket category belongs to at most one workflow; linking a category that is already linked is refused with a message naming the other workflow.
+- Only draft versions can be purged; published and archived versions are kept as the history of the workflow.
+- Purging a user, group, profile or task template resets it on every step that uses it, published versions included; the step is checked again before it runs (stage 3).
+
 ## Acceptance criteria
 
 1. **AC-1** An administrator with the plugin right can create a workflow, add `TASK`, `APPROVAL` and `END` nodes, connect them with transitions, and publish a version.
