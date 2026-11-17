@@ -14,7 +14,7 @@ These rules are non-negotiable and override any tool or agent default.
 7. **Follow SOLID.** Small focused classes, services separated from GLPI item classes, dependencies on abstractions at integration boundaries.
 8. **Code is in English.** Identifiers, file names, comments, specs, and test names are in English. User-facing strings are always translatable with `__('...', 'flowtask')` (source language `en_GB`, translation `pt_BR` in `locales/`).
 9. **No em dashes and no emojis.** Not in code, comments, UI text, specs, docs, or commit messages. Use a comma, colon, parentheses, or a hyphen instead. In the UI use the icon set already provided by GLPI (Tabler icons, `ti ti-*`).
-10. **No BOM, LF line endings.** PHP files with a UTF-8 BOM break GLPI output. The `.claude` hook strips BOMs after edits; `.gitattributes` enforces LF.
+10. **No BOM, LF line endings.** PHP files with a UTF-8 BOM break GLPI output. `.editorconfig` sets UTF-8 without BOM, `.gitattributes` enforces LF, and php-cs-fixer in CI rejects BOMs.
 
 The agent commits only when the user asks. Never push unless the user asks.
 
