@@ -28,11 +28,18 @@
  * -------------------------------------------------------------------------
  */
 
+use GlpiPlugin\Flowtask\Install\Installer;
+
 /**
  * Plugin install process
  */
 function plugin_flowtask_install(): bool
 {
+    /** @var DBmysql $DB */
+    global $DB;
+
+    (new Installer($DB))->install(new Migration(PLUGIN_FLOWTASK_VERSION));
+
     return true;
 }
 
@@ -41,5 +48,54 @@ function plugin_flowtask_install(): bool
  */
 function plugin_flowtask_uninstall(): bool
 {
+    /** @var DBmysql $DB */
+    global $DB;
+
+    (new Installer($DB))->uninstall(new Migration(PLUGIN_FLOWTASK_VERSION));
+
     return true;
+}
+
+/**
+ * Foreign keys pointing at core tables. When a referenced item is purged, GLPI
+ * resets these fields to 0 (or to the `_replace_by` item).
+ *
+ * Tables prefixed with `_` are documented only: tickets and categories are
+ * unique keys on our side, so their rows are deleted by the `item_purge`
+ * hooks registered in setup.php instead of being reset.
+ *
+ * @return array<string, array<string, list<string>>>
+ */
+function plugin_flowtask_getDatabaseRelations(): array
+{
+    if (!Plugin::isPluginActive('flowtask')) {
+        return [];
+    }
+
+    return [
+        'glpi_tickets' => [
+            '_glpi_plugin_flowtask_instances' => ['tickets_id'],
+        ],
+        'glpi_itilcategories' => [
+            '_glpi_plugin_flowtask_workflows_itilcategories' => ['itilcategories_id'],
+        ],
+        'glpi_entities' => [
+            'glpi_plugin_flowtask_workflows' => ['entities_id'],
+        ],
+        'glpi_users' => [
+            'glpi_plugin_flowtask_nodes'            => ['users_id'],
+            'glpi_plugin_flowtask_instancesteps'    => ['users_id'],
+            'glpi_plugin_flowtask_workflowversions' => ['users_id_publisher'],
+        ],
+        'glpi_groups' => [
+            'glpi_plugin_flowtask_nodes'         => ['groups_id'],
+            'glpi_plugin_flowtask_instancesteps' => ['groups_id'],
+        ],
+        'glpi_profiles' => [
+            'glpi_plugin_flowtask_nodes' => ['profiles_id'],
+        ],
+        'glpi_tasktemplates' => [
+            'glpi_plugin_flowtask_nodes' => ['tasktemplates_id'],
+        ],
+    ];
 }

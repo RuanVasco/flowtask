@@ -28,6 +28,11 @@
  * -------------------------------------------------------------------------
  */
 
+use Glpi\Plugin\Hooks;
+use GlpiPlugin\Flowtask\Instance;
+use GlpiPlugin\Flowtask\ProfileRights;
+use GlpiPlugin\Flowtask\Workflow_ITILCategory;
+
 /** @phpstan-ignore theCodingMachineSafe.function (safe to assume this isn't already defined) */
 define('PLUGIN_FLOWTASK_VERSION', '0.1.0');
 
@@ -43,7 +48,22 @@ define("PLUGIN_FLOWTASK_MAX_GLPI_VERSION", "12.0.99");
  * Init hooks of the plugin.
  * REQUIRED
  */
-function plugin_init_flowtask(): void {}
+function plugin_init_flowtask(): void
+{
+    if (!Plugin::isPluginActive('flowtask')) {
+        return;
+    }
+
+    /** @var array<string, array<string, mixed>> $PLUGIN_HOOKS */
+    global $PLUGIN_HOOKS;
+
+    Plugin::registerClass(ProfileRights::class, ['addtabon' => [Profile::class]]);
+
+    $PLUGIN_HOOKS[Hooks::ITEM_PURGE]['flowtask'] = [
+        Ticket::class       => Instance::purgeForTicket(...),
+        ITILCategory::class => Workflow_ITILCategory::purgeForCategory(...),
+    ];
+}
 
 /**
  * Get the name and the version of the plugin
