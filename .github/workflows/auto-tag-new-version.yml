@@ -1,12 +1,17 @@
 name: "Automatically tag new version"
 
+# Disabled until the first real release: it needs the AUTOTAG_TOKEN secret.
+# To re-enable, restore the trigger below and configure the secret.
+#
+# on:
+#   push:
+#     branches:
+#       - "main"
+#       - "**/bugfixes"
+#     paths:
+#       - "setup.php"
 on:
-  push:
-    branches:
-      - "main"
-      - "**/bugfixes"
-    paths:
-      - "setup.php"
+  workflow_dispatch:
 
 jobs:
   auto-tag-new-version:
