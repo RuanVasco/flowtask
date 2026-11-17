@@ -31,6 +31,7 @@
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\Flowtask\Instance;
 use GlpiPlugin\Flowtask\ProfileRights;
+use GlpiPlugin\Flowtask\Workflow;
 use GlpiPlugin\Flowtask\Workflow_ITILCategory;
 
 /** @phpstan-ignore theCodingMachineSafe.function (safe to assume this isn't already defined) */
@@ -58,6 +59,10 @@ function plugin_init_flowtask(): void
     global $PLUGIN_HOOKS;
 
     Plugin::registerClass(ProfileRights::class, ['addtabon' => [Profile::class]]);
+    Plugin::registerClass(Workflow_ITILCategory::class, ['addtabon' => [ITILCategory::class]]);
+
+    // getMenuContent() hides the entry from profiles without the right.
+    $PLUGIN_HOOKS[Hooks::MENU_TOADD]['flowtask'] = ['config' => Workflow::class];
 
     $PLUGIN_HOOKS[Hooks::ITEM_PURGE]['flowtask'] = [
         Ticket::class       => Instance::purgeForTicket(...),
