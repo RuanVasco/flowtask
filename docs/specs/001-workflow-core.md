@@ -25,7 +25,6 @@ Formulei is used only as a design reference; the code is rewritten.
 | Department | `Group` |
 | User | `User` |
 | Manager (N levels) | Requester's user supervisor (`users.users_id_supervisor`), N levels up |
-| Role | `Profile` within the ticket entity |
 | Node `FORM_FILL` / `DATA_COLLECTION` | `TASK`: a `TicketTask` from a `TaskTemplate` |
 | Node `APPROVAL` | `APPROVAL`: a `TicketValidation` |
 | Node `END` | `END`: optionally solves the ticket |
@@ -41,7 +40,9 @@ Formulei is used only as a design reference; the code is rewritten.
 
 ### Actor types
 
-`USER`, `GROUP`, `REQUESTER_MANAGER` (level N, behavior when missing: block or skip), `PROFILE`.
+`USER`, `GROUP`, `REQUESTER_MANAGER` (level N, behavior when missing: block or skip).
+
+There is no profile actor: GLPI profiles grant rights, they do not say who does the work, and a task or validation can only be assigned to one user or one group. Use a group instead.
 
 ### Definition management rules
 
@@ -54,7 +55,41 @@ Formulei is used only as a design reference; the code is rewritten.
 - Publishing a draft checks that every step has its required outgoing transitions (`START`: `ALWAYS`; `TASK`: `COMPLETED`; `APPROVAL`: `APPROVED` and `REJECTED`), that there is at least one `END` step and that every step is reachable from `START`. On failure nothing changes and every problem is listed. On success the previous published version becomes archived.
 - A ticket category belongs to at most one workflow; linking a category that is already linked is refused with a message naming the other workflow.
 - Only draft versions can be purged; published and archived versions are kept as the history of the workflow.
-- Purging a user, group, profile or task template resets it on every step that uses it, published versions included; the step is checked again before it runs (stage 3).
+- Purging a user, group or task template resets it on every step that uses it, published versions included; the step is checked again before it runs (stage 3).
+
+### Engine rules
+
+Start:
+
+- An instance starts when a ticket is created with, or changed to, a category linked to a workflow, and the ticket has no instance yet (AC-12). It does not start when the workflow is inactive, has no published version, is not visible in the ticket entity, or when the ticket is deleted, solved or closed.
+- The instance records the published version it starts on and keeps it until it ends (AC-8). It then follows the `ALWAYS` transition out of `START`.
+
+Entering a step:
+
+- `TASK`: adds a `TicketTask` from the step's task template, with state "To do", assigned to the resolved user (`users_id_tech`) or group (`groups_id_tech`) (AC-4).
+- `APPROVAL`: adds a `TicketValidation` targeting the resolved user or group (AC-6).
+- `END`: the instance becomes completed. When the step solves the ticket and the ticket is not solved or closed yet, a solution is added with a translatable text naming the workflow. If the solution is refused, the instance still completes and a warning is shown.
+- Every step entered, skipped included, adds an `InstanceStep` recording the step, the created item, the resolved actor and its dates, which is what the timeline shows (AC-9). A step can be entered again when the graph loops back to it; each pass is a new `InstanceStep`.
+- The engine creates these items on behalf of the workflow: it does not check the rights of the user whose action triggered it.
+
+Actor resolution:
+
+- `USER` and `GROUP` use the step's user or group. A user that is missing, deleted or inactive, or a missing group, cannot be resolved.
+- `REQUESTER_MANAGER` takes the first requester user of the ticket and walks `users_id_supervisor` up `manager_level` times. A missing requester, a missing link or a deleted or inactive supervisor at any level means the manager is missing (AC-7). Then, per step config, the instance is flagged stuck (block), or the step is recorded as skipped without creating anything and follows its success transition: `COMPLETED` for `TASK`, `APPROVED` for `APPROVAL`.
+- Any other actor that cannot be resolved, or a `TASK` step whose task template is missing, flags the instance stuck with the reason recorded.
+
+Advancing:
+
+- A `TicketTask` of an active step set to "Done" ends the step and follows `COMPLETED` (AC-5).
+- A `TicketValidation` of an active step answered "Accepted" or "Refused" ends the step and follows `APPROVED` or `REJECTED` (AC-6).
+- Only the first event on the active step counts: reopening the task or changing the answer later does not move the instance.
+- More than 50 steps entered in a row without waiting for a user (e.g. a loop of skipped steps) flags the instance stuck.
+
+Guard and stuck detection:
+
+- An instance is active while it is running or stuck. While it is active, deleting or purging a `TicketTask` or `TicketValidation` it created is refused with a translatable message (AC-13). Purging the ticket itself still purges them, along with the instance.
+- An instance whose active step lost its task or validation is flagged stuck with the reason recorded, and nothing is recreated (AC-14). This is checked whenever the ticket is updated and by a GLPI automatic action that scans running instances every hour.
+- A stuck instance stays on its step. The engine can retry the step (follow the answer of its task or approval when it has one, otherwise resolve the actor and create the item again) or cancel the instance; the buttons for both come with the ticket tab in stage 4.
 
 ## Acceptance criteria
 
@@ -84,13 +119,15 @@ Formulei is used only as a design reference; the code is rewritten.
 - Starting a workflow from a business rule action (category is the only trigger).
 - More than one workflow per ticket (use child tickets in a later version).
 - GLPI 11 support.
+- Profiles as actors (see Actor types).
+- Cancelling the instance when the ticket is solved, closed or deleted by hand; the instance keeps its state.
 
 ## Stages
 
 1. Data model: tables, item classes, install/uninstall migrations, rights (AC-10, AC-12 at the schema level).
 2. Definition management: forms to create workflows, nodes, transitions, versions and category links, and the purge guard (AC-1, AC-2, AC-3, AC-15).
 3. Engine: instance start, actor resolution, task and approval steps, transitions, deletion guard and stuck detection (AC-3 to AC-8, AC-12 to AC-14).
-4. Ticket tab with timeline, translations (AC-9, AC-11).
+4. Ticket tab with timeline, retry and cancel actions for stuck instances, translations (AC-9, AC-11).
 
 ## Decisions
 
