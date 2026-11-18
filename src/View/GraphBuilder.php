@@ -63,26 +63,16 @@ final readonly class GraphBuilder
         $nodes    = [];
         $start_id = 0;
         foreach (Node::getForVersion($version->getID()) as $node) {
-            $type = $node->getNodeType();
-            // The diagram cannot draw a step without a type.
-            if (!$type instanceof NodeType) {
+            $data = $this->node($node, $states[$node->getID()] ?? null);
+            if ($data === null) {
                 continue;
             }
 
-            if ($type === NodeType::START) {
+            if ($node->isStart()) {
                 $start_id = $node->getID();
             }
 
-            $nodes[] = [
-                'id'    => $node->getID(),
-                'type'  => $type->value,
-                'name'  => $node->getName(),
-                'icon'  => $type->icon(),
-                'actor' => $node->getActorLabel(),
-                'x'     => Fields::int($node->fields, 'position_x'),
-                'y'     => Fields::int($node->fields, 'position_y'),
-                'state' => $states[$node->getID()] ?? null,
-            ];
+            $nodes[] = $data;
         }
 
         // START is not recorded as a step: it is passed once anything was
@@ -113,23 +103,63 @@ final readonly class GraphBuilder
             'ORDER' => 'id',
         ]);
         foreach ($rows as $row) {
-            $source    = Fields::int($row, 'plugin_flowtask_nodes_id_source');
-            $target    = Fields::int($row, 'plugin_flowtask_nodes_id_target');
-            $condition = Fields::string($row, 'trigger_condition');
-            if (!in_array($source, $node_ids, true) || !in_array($target, $node_ids, true)) {
+            if (!is_array($row)) {
                 continue;
             }
 
-            $edges[] = [
-                'id'        => Fields::int($row, 'id'),
-                'source'    => $source,
-                'target'    => $target,
-                'condition' => $condition,
-                'taken'     => isset($taken[$source][$condition]),
-            ];
+            $edge = $this->edge($row, $taken);
+            if (in_array($edge['source'], $node_ids, true) && in_array($edge['target'], $node_ids, true)) {
+                $edges[] = $edge;
+            }
         }
 
         return ['nodes' => $nodes, 'edges' => $edges];
+    }
+
+    /**
+     * A step as the diagram draws it, or null when it has no valid type.
+     *
+     * @return GraphNode|null
+     */
+    public function node(Node $node, ?string $state = null): ?array
+    {
+        $type = $node->getNodeType();
+        if (!$type instanceof NodeType) {
+            return null;
+        }
+
+        return [
+            'id'    => $node->getID(),
+            'type'  => $type->value,
+            'name'  => $node->getName(),
+            'icon'  => $type->icon(),
+            'actor' => $node->getActorLabel(),
+            'x'     => Fields::int($node->fields, 'position_x'),
+            'y'     => Fields::int($node->fields, 'position_y'),
+            'state' => $state,
+        ];
+    }
+
+    /**
+     * A transition as the diagram draws it.
+     *
+     * @param array<mixed>                     $row   Transition row
+     * @param array<int, array<string, true>> $taken Conditions each step followed
+     *
+     * @return GraphEdge
+     */
+    public function edge(array $row, array $taken = []): array
+    {
+        $source    = Fields::int($row, 'plugin_flowtask_nodes_id_source');
+        $condition = Fields::string($row, 'trigger_condition');
+
+        return [
+            'id'        => Fields::int($row, 'id'),
+            'source'    => $source,
+            'target'    => Fields::int($row, 'plugin_flowtask_nodes_id_target'),
+            'condition' => $condition,
+            'taken'     => isset($taken[$source][$condition]),
+        ];
     }
 
     /**
