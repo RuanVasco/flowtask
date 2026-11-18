@@ -368,11 +368,13 @@
     flex-direction: column;
     align-items: flex-end;
     gap: 8px;
+    /* The panel scrolls only past the canvas height (Panel adds a 15px margin). */
+    max-height: calc(100% - 30px);
 }
 
 .ft-panel {
     width: 280px;
-    max-height: 440px;
+    min-height: 0;
     padding: 10px;
     overflow-y: auto;
     background: var(--ft-surface);
