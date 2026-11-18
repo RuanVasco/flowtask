@@ -124,7 +124,7 @@ Guard and stuck detection:
 
 ## Out of scope (v0.1)
 
-- Visual drag-and-drop editor: spec 002 (`002-workflow-diagram.md`) adds it and later replaces the step and transition forms.
+- Visual drag-and-drop editor: spec 002 (`002-workflow-diagram.md`) adds it and replaces the step and transition forms and tabs.
 - Parallel branches and joins.
 - Timers, SLA per step, HTTP or webhook nodes, notifications beyond GLPI's native ones.
 - Child tickets, transfer between workflows.

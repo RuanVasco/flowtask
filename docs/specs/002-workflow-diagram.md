@@ -1,6 +1,6 @@
 # 002 - Workflow diagram editor
 
-Status: Accepted
+Status: Implemented
 
 ## Problem
 
@@ -78,7 +78,7 @@ A diagram component (React Flow, bundled with Vite into `public/lib/`) shows the
 1. Build and viewer: `package.json`, Vite, CI and `tools/ci-local.sh`, the graph JSON endpoint, the viewer on the workflow and on the ticket tab with the active step highlighted, auto layout (AC-7 viewer side, AC-8, AC-9, AC-11).
 2. Editor structure: palette, move, connect, delete, with their endpoints (AC-2, AC-3, AC-5, AC-7 endpoint side).
 3. Step configuration and publishing: side panel with pickers, warning markers, toolbar actions (edit, publish, discard), errors highlighted on the diagram, translations (AC-1, AC-4, AC-6, AC-10).
-4. Remove the forms, once the maintainer has validated the editor: the step and transition forms (`front/node.form.php`, `front/transition.form.php`, `VersionItemForm`) and their add buttons go; the steps and transitions tabs become read-only lists or are dropped in favor of the diagram (AC-12).
+4. Remove the forms, once the maintainer has validated the editor: the step and transition forms (`front/node.form.php`, `front/transition.form.php`, `VersionItemForm`) and their add buttons go, and the steps and transitions tabs are dropped in favor of the diagram. GLPI serves a generic form for any item class whose form script is missing, so the step and transition item pages are closed as well (they cannot be viewed on their own); the diagram endpoints are the only way in (AC-12).
 
 ## Open questions
 
