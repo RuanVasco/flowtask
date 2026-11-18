@@ -91,6 +91,19 @@ Guard and stuck detection:
 - An instance whose active step lost its task or validation is flagged stuck with the reason recorded, and nothing is recreated (AC-14). This is checked whenever the ticket is updated and by a GLPI automatic action that scans running instances every hour.
 - A stuck instance stays on its step. The engine can retry the step (follow the answer of its task or approval when it has one, otherwise resolve the actor and create the item again) or cancel the instance; the buttons for both come with the ticket tab in stage 4.
 
+### Ticket tab rules
+
+- A ticket that has an instance shows a "Workflow" tab to every user who can view the ticket. A ticket without an instance shows no tab.
+- The tab header shows the workflow name (a link when the user can view the workflow), the version the instance runs on, its status (running, stuck, completed or cancelled), and its start and end dates. A stuck instance also shows its recorded reason.
+- The timeline lists every `InstanceStep` in the order it was entered (AC-9): the step name and type, its status (active, done, skipped or cancelled), the transition it followed, the resolved user or group, the task or approval it created, and its start and end dates. The active step stands out.
+- **Retry** is offered on a stuck instance to users who can update the ticket. It runs the engine retry described above; if the step is still blocked, the instance stays stuck with the new reason.
+- **Cancel** is offered on an active (running or stuck) instance to users who can view the ticket and have the update right on workflows (`plugin_flowtask_workflow`), as cancelling skips the remaining steps, approvals included. It asks for confirmation. The instance and its active step become cancelled; tasks and approvals already created stay on the ticket and can then be deleted.
+- Both actions are POST requests protected by GLPI's CSRF check. They check the right and the instance status again on the server; an action that no longer applies (e.g. a second click) changes nothing and shows a message.
+
+### Translations
+
+- Every user-facing string uses the `flowtask` text domain (AC-11). `locales/flowtask.pot` is extracted with `bin/console tools:locales:extract --plugin=flowtask`, and `locales/pt_BR.po` is translated in full and compiled to `pt_BR.mo` with `tools:locales:compile`. `en_GB` is the source language and needs no catalog.
+
 ## Acceptance criteria
 
 1. **AC-1** An administrator with the plugin right can create a workflow, add `TASK`, `APPROVAL` and `END` nodes, connect them with transitions, and publish a version.
@@ -127,7 +140,7 @@ Guard and stuck detection:
 1. Data model: tables, item classes, install/uninstall migrations, rights (AC-10, AC-12 at the schema level).
 2. Definition management: forms to create workflows, nodes, transitions, versions and category links, and the purge guard (AC-1, AC-2, AC-3, AC-15).
 3. Engine: instance start, actor resolution, task and approval steps, transitions, deletion guard and stuck detection (AC-3 to AC-8, AC-12 to AC-14).
-4. Ticket tab with timeline, retry and cancel actions for stuck instances, translations (AC-9, AC-11).
+4. Ticket tab with timeline, retry of stuck instances and cancel of active ones, translations (AC-9, AC-11).
 
 ## Decisions
 
