@@ -91,9 +91,6 @@ function plugin_flowtask_getDatabaseRelations(): array
             'glpi_plugin_flowtask_nodes'         => ['groups_id'],
             'glpi_plugin_flowtask_instancesteps' => ['groups_id'],
         ],
-        'glpi_profiles' => [
-            'glpi_plugin_flowtask_nodes' => ['profiles_id'],
-        ],
         'glpi_tasktemplates' => [
             'glpi_plugin_flowtask_nodes' => ['tasktemplates_id'],
         ],

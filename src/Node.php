@@ -41,7 +41,6 @@ use GlpiPlugin\Flowtask\Enum\NodeType;
 use GlpiPlugin\Flowtask\Enum\TransitionCondition;
 use GlpiPlugin\Flowtask\Support\Fields;
 use Group;
-use Profile;
 use Session;
 use User;
 
@@ -56,7 +55,7 @@ class Node extends CommonDBChild
     public static string $items_id = 'plugin_flowtask_workflowversions_id';
 
     /** Foreign keys to core items, reset by GLPI when those items are purged. */
-    private const REFERENCE_FIELDS = ['users_id', 'groups_id', 'profiles_id', 'tasktemplates_id'];
+    private const REFERENCE_FIELDS = ['users_id', 'groups_id', 'tasktemplates_id'];
 
     public static function getTypeName($nb = 0)
     {
@@ -91,7 +90,6 @@ class Node extends CommonDBChild
             ),
             ActorType::USER               => sprintf(__('%1$s: %2$s'), $actor->label(), User::getFriendlyNameById(Fields::int($this->fields, 'users_id'))),
             ActorType::GROUP              => sprintf(__('%1$s: %2$s'), $actor->label(), Group::getFriendlyNameById(Fields::int($this->fields, 'groups_id'))),
-            ActorType::PROFILE            => sprintf(__('%1$s: %2$s'), $actor->label(), Profile::getFriendlyNameById(Fields::int($this->fields, 'profiles_id'))),
         };
     }
 
@@ -323,7 +321,7 @@ class Node extends CommonDBChild
     }
 
     /**
-     * When a user, group, profile or task template is purged, GLPI resets the
+     * When a user, group or task template is purged, GLPI resets the
      * steps pointing at it through update() (see plugin_flowtask_getDatabaseRelations()).
      * That reset is let through even on published versions: a dangling id
      * would mean the same, and the step is checked again before it runs.

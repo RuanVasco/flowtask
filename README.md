@@ -10,7 +10,7 @@ Workflows inside GLPI tickets. Each step becomes a ticket task or validation ass
 
 O Flowtask executa workflows dentro dos chamados do GLPI:
 
-- etapas atribuídas por ator (usuário, grupo, gestor do requerente, perfil);
+- etapas atribuídas por ator (usuário, grupo, gestor do requerente);
 - aprovações usando a validação nativa do GLPI;
 - transições condicionais entre etapas;
 - linha do tempo do fluxo dentro do chamado;
@@ -34,7 +34,7 @@ Veja [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Flowtask runs workflows inside GLPI tickets:
 
-- steps assigned per actor (user, group, requester manager, profile);
+- steps assigned per actor (user, group, requester manager);
 - approvals using GLPI native validations;
 - conditional transitions between steps;
 - workflow timeline inside the ticket;

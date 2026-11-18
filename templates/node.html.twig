@@ -57,9 +57,6 @@
         {{ fields.dropdownField('Group', 'groups_id', item.fields['groups_id'], 'Group'|itemtype_name, field_options|merge({
             'add_field_class': 'flowtask-conditional flowtask-type-task flowtask-type-approval flowtask-actor-group',
         })) }}
-        {{ fields.dropdownField('Profile', 'profiles_id', item.fields['profiles_id'], 'Profile'|itemtype_name, field_options|merge({
-            'add_field_class': 'flowtask-conditional flowtask-type-task flowtask-type-approval flowtask-actor-profile',
-        })) }}
         {{ fields.numberField('manager_level', item.fields['manager_level'], __('Manager level', 'flowtask'), field_options|merge({
             'min': 1,
             'helper': __('1 is the requester supervisor, 2 the supervisor of that supervisor, and so on.', 'flowtask'),

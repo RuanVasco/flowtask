@@ -59,7 +59,6 @@ final class StepConfiguration
             'actor_type'               => $actor?->value,
             'users_id'                 => 0,
             'groups_id'                => 0,
-            'profiles_id'              => 0,
             'manager_level'            => 1,
             'missing_manager_behavior' => MissingManagerBehavior::BLOCK->value,
             'tasktemplates_id'         => $type === NodeType::TASK ? Fields::int($fields, 'tasktemplates_id') : 0,

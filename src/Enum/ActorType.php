@@ -35,7 +35,6 @@ enum ActorType: string
     case USER = 'user';
     case GROUP = 'group';
     case REQUESTER_MANAGER = 'requester_manager';
-    case PROFILE = 'profile';
 
     public function label(): string
     {
@@ -43,7 +42,6 @@ enum ActorType: string
             self::USER              => __('User', 'flowtask'),
             self::GROUP             => __('Group', 'flowtask'),
             self::REQUESTER_MANAGER => __('Requester manager', 'flowtask'),
-            self::PROFILE           => __('Profile', 'flowtask'),
         };
     }
 
@@ -55,7 +53,6 @@ enum ActorType: string
         return match ($this) {
             self::USER              => 'users_id',
             self::GROUP             => 'groups_id',
-            self::PROFILE           => 'profiles_id',
             self::REQUESTER_MANAGER => null,
         };
     }
