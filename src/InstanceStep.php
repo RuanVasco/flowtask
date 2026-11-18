@@ -31,6 +31,8 @@
 namespace GlpiPlugin\Flowtask;
 
 use CommonDBChild;
+use GlpiPlugin\Flowtask\Enum\StepStatus;
+use GlpiPlugin\Flowtask\Support\Fields;
 
 /**
  * A step reached by an instance, linked to the ticket task or validation it created.
@@ -44,5 +46,43 @@ class InstanceStep extends CommonDBChild
     public static function getTypeName($nb = 0)
     {
         return _n('Workflow step', 'Workflow steps', $nb, 'flowtask');
+    }
+
+    /**
+     * The step the instance waits on. An instance has at most one, as v0.1
+     * has no parallel branches.
+     */
+    public static function getActiveForInstance(int $instances_id): ?self
+    {
+        return self::findOne([self::$items_id => $instances_id, 'status' => StepStatus::ACTIVE->value]);
+    }
+
+    /**
+     * The active step waiting on a ticket task or validation.
+     */
+    public static function getActiveForItem(string $itemtype, int $items_id): ?self
+    {
+        return self::findOne([
+            'itemtype' => $itemtype,
+            'items_id' => $items_id,
+            'status'   => StepStatus::ACTIVE->value,
+        ]);
+    }
+
+    public function getNode(): ?Node
+    {
+        $node = new Node();
+
+        return $node->getFromDB(Fields::int($this->fields, 'plugin_flowtask_nodes_id')) ? $node : null;
+    }
+
+    /**
+     * @param array<string, mixed> $criteria
+     */
+    private static function findOne(array $criteria): ?self
+    {
+        $step = new self();
+
+        return $step->getFromDBByRequest(['WHERE' => $criteria, 'ORDER' => 'id DESC', 'LIMIT' => 1]) ? $step : null;
     }
 }

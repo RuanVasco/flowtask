@@ -35,4 +35,6 @@ enum StepStatus: string
     case ACTIVE = 'active';
     case DONE = 'done';
     case SKIPPED = 'skipped';
+    /** The instance was cancelled while the step was active. */
+    case CANCELLED = 'cancelled';
 }

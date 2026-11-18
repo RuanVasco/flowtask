@@ -75,6 +75,8 @@ final readonly class Installer
 
         $this->update();
 
+        $migration->addCrontask(Instance::class, Instance::CRON_CHECK, HOUR_TIMESTAMP);
+
         $migration->addRight(Workflow::$rightname, ALLSTANDARDRIGHT, ['config' => UPDATE]);
         $migration->executeMigration();
     }

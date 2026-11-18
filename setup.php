@@ -29,7 +29,8 @@
  */
 
 use Glpi\Plugin\Hooks;
-use GlpiPlugin\Flowtask\Instance;
+use GlpiPlugin\Flowtask\Engine\DeletionGuard;
+use GlpiPlugin\Flowtask\Engine\TicketEvents;
 use GlpiPlugin\Flowtask\ProfileRights;
 use GlpiPlugin\Flowtask\Workflow;
 use GlpiPlugin\Flowtask\Workflow_ITILCategory;
@@ -65,8 +66,23 @@ function plugin_init_flowtask(): void
     $PLUGIN_HOOKS[Hooks::MENU_TOADD]['flowtask'] = ['config' => Workflow::class];
 
     $PLUGIN_HOOKS[Hooks::ITEM_PURGE]['flowtask'] = [
-        Ticket::class       => Instance::purgeForTicket(...),
+        Ticket::class       => TicketEvents::onTicketPurge(...),
         ITILCategory::class => Workflow_ITILCategory::purgeForCategory(...),
+    ];
+
+    // Workflow engine (spec 001, engine rules).
+    $PLUGIN_HOOKS[Hooks::ITEM_ADD]['flowtask'] = [
+        Ticket::class => TicketEvents::onTicketAdd(...),
+    ];
+    $PLUGIN_HOOKS[Hooks::ITEM_UPDATE]['flowtask'] = [
+        Ticket::class           => TicketEvents::onTicketUpdate(...),
+        TicketTask::class       => TicketEvents::onTaskUpdate(...),
+        TicketValidation::class => TicketEvents::onValidationUpdate(...),
+    ];
+    $PLUGIN_HOOKS[Hooks::PRE_ITEM_PURGE]['flowtask'] = [
+        Ticket::class           => DeletionGuard::beforeTicketPurge(...),
+        TicketTask::class       => DeletionGuard::beforeItemPurge(...),
+        TicketValidation::class => DeletionGuard::beforeItemPurge(...),
     ];
 }
 

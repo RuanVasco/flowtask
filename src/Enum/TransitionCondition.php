@@ -69,4 +69,17 @@ enum TransitionCondition: string
             NodeType::END      => [],
         };
     }
+
+    /**
+     * Condition a skipped step follows (spec 001, engine rules): the success
+     * path, as there is nothing to do and nobody to object.
+     */
+    public static function onSkip(NodeType $type): ?self
+    {
+        return match ($type) {
+            NodeType::TASK     => self::COMPLETED,
+            NodeType::APPROVAL => self::APPROVED,
+            default            => null,
+        };
+    }
 }

@@ -31,6 +31,11 @@
 namespace GlpiPlugin\Flowtask;
 
 use CommonDBChild;
+use CronTask;
+use DBmysql;
+use GlpiPlugin\Flowtask\Engine\WorkflowEngine;
+use GlpiPlugin\Flowtask\Enum\InstanceStatus;
+use GlpiPlugin\Flowtask\Support\Fields;
 use Ticket;
 
 /**
@@ -42,9 +47,31 @@ class Instance extends CommonDBChild
 
     public static string $items_id = 'tickets_id';
 
+    public const CRON_CHECK = 'checkInstances';
+
     public static function getTypeName($nb = 0)
     {
         return _n('Workflow instance', 'Workflow instances', $nb, 'flowtask');
+    }
+
+    public static function getForTicket(int $tickets_id): ?self
+    {
+        $instance = new self();
+
+        return $instance->getFromDBByCrit([self::$items_id => $tickets_id]) ? $instance : null;
+    }
+
+    public function getStatus(): ?InstanceStatus
+    {
+        return InstanceStatus::tryFrom(Fields::string($this->fields, 'status'));
+    }
+
+    /**
+     * Running or stuck: the instance has not ended yet (AC-13).
+     */
+    public function isActive(): bool
+    {
+        return in_array($this->getStatus(), InstanceStatus::active(), true);
     }
 
     public function cleanDBonPurge()
@@ -58,5 +85,47 @@ class Instance extends CommonDBChild
     public static function purgeForTicket(Ticket $ticket): void
     {
         (new self())->deleteByCriteria(['tickets_id' => $ticket->getID()], true);
+    }
+
+    /**
+     * @return array{description?: string}
+     */
+    public static function cronInfo(string $name): array
+    {
+        return $name === self::CRON_CHECK
+            ? ['description' => __('Flag workflow instances whose task or approval was removed', 'flowtask')]
+            : [];
+    }
+
+    /**
+     * Automatic action flagging running instances that lost the item of their
+     * active step (spec 001, AC-14).
+     */
+    public static function cronCheckInstances(CronTask $task): int
+    {
+        /** @var DBmysql $DB */
+        global $DB;
+
+        $engine  = WorkflowEngine::fromDb($DB);
+        $flagged = 0;
+        $rows    = $DB->request([
+            'FROM'  => self::getTable(),
+            'WHERE' => ['status' => InstanceStatus::RUNNING->value],
+        ]);
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $instance = new self();
+            $instance->getFromResultSet($row);
+            if ($engine->detectLostItem($instance)) {
+                $flagged++;
+            }
+        }
+
+        $task->addVolume($flagged);
+
+        return $flagged > 0 ? 1 : 0;
     }
 }

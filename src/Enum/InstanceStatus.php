@@ -36,4 +36,14 @@ enum InstanceStatus: string
     case COMPLETED = 'completed';
     case STUCK = 'stuck';
     case CANCELLED = 'cancelled';
+
+    /**
+     * Statuses of an instance that has not ended yet.
+     *
+     * @return list<self>
+     */
+    public static function active(): array
+    {
+        return [self::RUNNING, self::STUCK];
+    }
 }
