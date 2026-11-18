@@ -29,23 +29,12 @@
 
 import { describe, expect, it } from 'vitest';
 import { conditionFor, toFlowEdges, toFlowNodes } from './mapping';
-import type { Graph, GraphNode, NodeType, Strings } from './types';
+import { makeNode, strings } from './fixtures.test-helper';
+import type { Graph, GraphNode, NodeType } from './types';
 
 function node(id: number, type: NodeType): GraphNode {
-    return { id, type, name: `Step ${id}`, icon: '', actor: '', x: id * 10, y: 0, state: null };
+    return makeNode(id, type, id * 10, 0);
 }
-
-const strings: Strings = {
-    types: { start: 'Start', task: 'Task', approval: 'Approval', end: 'End' },
-    conditions: { always: 'Always', completed: 'Completed', approved: 'Approved', rejected: 'Rejected' },
-    states: { active: 'In progress', done: 'Done', skipped: 'Skipped', cancelled: 'Cancelled' },
-    loading: 'Loading',
-    load_error: 'Error',
-    save_error: 'Not saved',
-    palette: 'Palette',
-    delete: 'Delete',
-    close: 'Close',
-};
 
 const graph: Graph = {
     nodes: [node(1, 'start'), node(2, 'approval'), node(3, 'end'), node(4, 'end')],

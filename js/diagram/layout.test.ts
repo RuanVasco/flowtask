@@ -28,12 +28,9 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { makeNode as node } from './fixtures.test-helper';
 import { NODE_SIZES, needsLayout, withPositions } from './layout';
-import type { Graph, GraphNode, NodeType } from './types';
-
-function node(id: number, type: NodeType, x = 0, y = 0): GraphNode {
-    return { id, type, name: `Step ${id}`, icon: '', actor: '', x, y, state: null };
-}
+import type { Graph, GraphNode } from './types';
 
 const linear: Graph = {
     nodes: [node(1, 'start'), node(2, 'task'), node(3, 'end')],

@@ -35,7 +35,11 @@
 
 /** A change the server refused, with its messages (already translated). */
 export class RefusedError extends Error {
-    constructor(public readonly messages: string[]) {
+    constructor(
+        public readonly messages: string[],
+        /** The whole answer, e.g. the problems of a refused publication. */
+        public readonly data: unknown = null,
+    ) {
         super(messages.join(' '));
     }
 }
@@ -59,7 +63,7 @@ export async function post<T extends Answer>(url: string, body: unknown = {}): P
 
     if (!response.ok) {
         const errors = (data as { errors?: unknown } | null)?.errors;
-        throw new RefusedError(Array.isArray(errors) ? errors.filter((e): e is string => typeof e === 'string') : []);
+        throw new RefusedError(Array.isArray(errors) ? errors.filter((e): e is string => typeof e === 'string') : [], data);
     }
 
     return data as T;

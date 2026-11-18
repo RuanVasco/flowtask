@@ -69,12 +69,12 @@ class Diagram extends CommonGLPI
             return true;
         }
 
-        // The editor is on the workflow, for its draft (spec 002, AC-7).
-        $editable = $item instanceof Workflow && $version->isDraft() && $item->can($item->getID(), UPDATE);
-        DiagramView::display(
-            DiagramView::getVersionGraphURL($version->getID()),
-            $editable ? $version->getID() : null,
-        );
+        // The editor and the version actions are on the workflow (spec 002, AC-7).
+        if ($item instanceof Workflow) {
+            DiagramView::displayForWorkflow($item, $version);
+        } else {
+            DiagramView::display(DiagramView::getVersionGraphURL($version->getID()));
+        }
 
         return true;
     }

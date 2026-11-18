@@ -316,3 +316,73 @@
 .ft-edge-label--rejected {
     color: var(--ft-danger);
 }
+
+/* Missing configuration and failed publication (spec 002, AC-6). */
+.ft-node__marker {
+    margin-left: auto;
+    color: var(--ft-warning);
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.ft-node--circle .ft-node__marker {
+    position: absolute;
+    top: -4px;
+    right: 24px;
+}
+
+.ft-node--failed.ft-node--box,
+.ft-node--failed .ft-node__circle {
+    border-color: var(--ft-danger);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--ft-danger) 25%, transparent);
+}
+
+/* Toolbar above the canvas, side panel over it (spec 002, editor). */
+.flowtask-diagram {
+    display: flex;
+    flex-direction: column;
+}
+
+.ft-diagram__canvas {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.ft-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--ft-border);
+}
+
+.ft-toolbar__actions {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.ft-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.ft-panel {
+    width: 280px;
+    max-height: 440px;
+    padding: 10px;
+    overflow-y: auto;
+    background: var(--ft-surface);
+    border: 1px solid var(--ft-border);
+    border-radius: 8px;
+    text-align: left;
+}
+
+/* Inline under the search field: the panel scrolls, so an overlay would be cut. */
+.ft-picker__list {
+    max-height: 200px;
+    overflow-y: auto;
+}

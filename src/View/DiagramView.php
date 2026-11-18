@@ -30,10 +30,21 @@
 
 namespace GlpiPlugin\Flowtask\View;
 
+use Dropdown;
+use Entity;
 use Glpi\Application\View\TemplateRenderer;
+use GlpiPlugin\Flowtask\Enum\ActorType;
+use GlpiPlugin\Flowtask\Enum\MissingManagerBehavior;
 use GlpiPlugin\Flowtask\Enum\NodeType;
 use GlpiPlugin\Flowtask\Enum\StepStatus;
 use GlpiPlugin\Flowtask\Enum\TransitionCondition;
+use GlpiPlugin\Flowtask\Support\Fields;
+use GlpiPlugin\Flowtask\Workflow;
+use GlpiPlugin\Flowtask\WorkflowVersion;
+use Group;
+use Session;
+use TaskTemplate;
+use User;
 
 use function Safe\filemtime;
 
@@ -54,17 +65,50 @@ final class DiagramView
     private const EDITOR_HEIGHT = 600;
 
     /**
-     * @param int|null $editable_version Draft the user edits on the diagram,
-     *                                   or null for the viewer
+     * Viewer of a version, e.g. on the version page.
      */
-    public static function display(string $graph_url, ?int $editable_version = null): void
+    public static function display(string $graph_url): void
     {
-        $context = self::context($graph_url, true);
-        if ($editable_version !== null) {
-            $context['config']['mode'] = 'editor';
-            $context['config']['urls'] = self::getEditURLs($editable_version);
-            $context['height']         = self::EDITOR_HEIGHT;
+        TemplateRenderer::getInstance()->display('@flowtask/diagram.html.twig', self::context($graph_url, true));
+    }
+
+    /**
+     * Diagram tab of a workflow: the editor on its draft, or the viewer, with
+     * the version actions the user may take (spec 002, where it lives).
+     */
+    public static function displayForWorkflow(Workflow $workflow, WorkflowVersion $version): void
+    {
+        $context = self::context(self::getVersionGraphURL($version->getID()), true);
+        $config  = &$context['config'];
+        $config['version'] = [
+            'label'  => sprintf(__('Version %d', 'flowtask'), Fields::int($version->fields, 'version_number')),
+            'status' => $version->getStatus()->value,
+            'status_label' => $version->getStatus()->label(),
+        ];
+
+        $canedit = $workflow->can($workflow->getID(), UPDATE);
+        $actions = [];
+        if ($canedit && $version->isDraft()) {
+            $config['mode']     = 'editor';
+            $config['urls']     = self::getEditURLs($version->getID());
+            $config['pickers']  = self::getPickers($workflow);
+            $config['options']  = self::getOptions();
+            $context['height']  = self::EDITOR_HEIGHT;
+            $actions['publish'] = ['url' => WorkflowVersion::getPublishURL($version->getID())];
+            $actions['discard'] = [
+                'url'     => WorkflowVersion::getFormURL(),
+                'fields'  => ['id' => $version->getID(), 'purge' => 1],
+                'confirm' => __('Discard this draft and its changes?', 'flowtask'),
+            ];
+        } elseif ($canedit) {
+            $actions['edit'] = [
+                'url'    => WorkflowVersion::getFormURL(),
+                'fields' => [WorkflowVersion::$items_id => $workflow->getID(), 'add' => 1],
+            ];
         }
+
+        $config['actions'] = $actions;
+        unset($config);
 
         TemplateRenderer::getInstance()->display('@flowtask/diagram.html.twig', $context);
     }
@@ -115,11 +159,78 @@ final class DiagramView
 
         return [
             'add_node'          => $base . 'WorkflowVersion/' . $versions_id . '/Node',
+            'update_node'       => $base . 'Node/{id}',
             'positions'         => $base . 'WorkflowVersion/' . $versions_id . '/Positions',
             'add_transition'    => $base . 'WorkflowVersion/' . $versions_id . '/Transition',
             'delete_node'       => $base . 'Node/{id}/Delete',
             'delete_transition' => $base . 'Transition/{id}/Delete',
         ];
+    }
+
+    /**
+     * GLPI's dropdown endpoints, with the IDOR tokens they check, so the
+     * pickers see what GLPI forms see: same rights, entities of the workflow.
+     *
+     * @return array<string, array{url: string, params: array<string, string>}>
+     */
+    private static function getPickers(Workflow $workflow): array
+    {
+        $entity   = Fields::int($workflow->fields, 'entities_id');
+        $entities = Fields::int($workflow->fields, 'is_recursive') > 0
+            ? array_values(array_map(intval(...), getSonsOf(Entity::getTable(), $entity)))
+            : [$entity];
+        $restrict = json_encode($entities, JSON_THROW_ON_ERROR);
+        $values   = self::getRootDoc() . '/ajax/getDropdownValue.php';
+
+        return [
+            'user' => [
+                'url'    => self::getRootDoc() . '/ajax/getDropdownUsers.php',
+                'params' => [
+                    'right'           => 'all',
+                    'entity_restrict' => $restrict,
+                    '_idor_token'     => Session::getNewIDORToken(User::class, ['right' => 'all']),
+                ],
+            ],
+            'group' => [
+                'url'    => $values,
+                'params' => [
+                    'itemtype'        => Group::class,
+                    'entity_restrict' => $restrict,
+                    '_idor_token'     => Session::getNewIDORToken(Group::class),
+                ],
+            ],
+            'tasktemplate' => [
+                'url'    => $values,
+                'params' => [
+                    'itemtype'        => TaskTemplate::class,
+                    'entity_restrict' => $restrict,
+                    '_idor_token'     => Session::getNewIDORToken(TaskTemplate::class),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Choices of the side panel, labelled.
+     *
+     * @return array<string, array<string, string>>
+     */
+    private static function getOptions(): array
+    {
+        $options = ['step_types' => [], 'actor_types' => [], 'behaviors' => []];
+        foreach ([NodeType::TASK, NodeType::APPROVAL, NodeType::END] as $type) {
+            $options['step_types'][$type->value] = $type->label();
+        }
+
+        foreach (ActorType::cases() as $actor) {
+            $options['actor_types'][$actor->value] = $actor->label();
+        }
+
+        foreach (MissingManagerBehavior::cases() as $behavior) {
+            $options['behaviors'][$behavior->value] = $behavior->label();
+        }
+
+        return $options;
     }
 
     public static function getInstanceGraphURL(int $instances_id): string
@@ -171,6 +282,28 @@ final class DiagramView
             'palette'    => __('Drag a step onto the diagram', 'flowtask'),
             'delete'     => __('Delete'),
             'close'      => __('Close'),
+            // Toolbar (spec 002, where it lives).
+            'edit'           => __('Edit', 'flowtask'),
+            'publish'        => __('Publish', 'flowtask'),
+            'discard'        => __('Discard draft', 'flowtask'),
+            'publish_failed' => __('The version cannot be published:', 'flowtask'),
+            // Side panel (spec 002, configure a step).
+            'panel_hint'     => __('Select a step to configure it.', 'flowtask'),
+            'start_hint'     => __('The start step has nothing to configure.', 'flowtask'),
+            'name'           => __('Name'),
+            'type'           => _n('Type', 'Types', 1),
+            'actor'          => __('Actor', 'flowtask'),
+            'user'           => User::getTypeName(1),
+            'group'          => Group::getTypeName(1),
+            'manager_level'  => __('Manager level', 'flowtask'),
+            'manager_help'   => __('1 is the requester supervisor, 2 the supervisor of that supervisor, and so on.', 'flowtask'),
+            'missing_manager' => __('When the manager is missing', 'flowtask'),
+            'task_template'  => TaskTemplate::getTypeName(1),
+            'solve_ticket'   => __('Solve the ticket', 'flowtask'),
+            'none'           => Dropdown::EMPTY_VALUE,
+            'search'         => __('Search'),
+            'no_results'     => __('No results found'),
+            'problems'       => __('This step cannot be published yet:', 'flowtask'),
         ];
     }
 

@@ -29,9 +29,10 @@
 import { Background, Controls, ReactFlow } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { canvasProps, colorMode } from './canvas';
-import { Editor } from './Editor';
+import { Editor, type Kept } from './Editor';
 import { withPositions } from './layout';
 import { toFlowEdges, toFlowNodes } from './mapping';
+import { Toolbar } from './Toolbar';
 import type { DiagramConfig, Graph, Strings } from './types';
 
 /** `generation` counts the graphs loaded, so the editor restarts from each new one. */
@@ -53,7 +54,11 @@ async function fetchGraph(url: string): Promise<Graph> {
 export function Diagram({ config }: { config: DiagramConfig }) {
     const [state, setState] = useState<LoadState>({ status: 'loading' });
     const [loads, setLoads] = useState(0);
-    const reload = useCallback(() => setLoads((count) => count + 1), []);
+    const [kept, setKept] = useState<Kept | undefined>(undefined);
+    const reload = useCallback((keep?: Kept) => {
+        setKept(keep);
+        setLoads((count) => count + 1);
+    }, []);
 
     useEffect(() => {
         let cancelled = false;
@@ -83,9 +88,14 @@ export function Diagram({ config }: { config: DiagramConfig }) {
     }
 
     return config.mode === 'editor' ? (
-        <Editor key={state.generation} config={config} graph={state.graph} reload={reload} />
+        <Editor key={state.generation} config={config} graph={state.graph} reload={reload} kept={kept} />
     ) : (
-        <Viewer graph={state.graph} strings={config.strings} />
+        <>
+            <Toolbar version={config.version} actions={config.actions} strings={config.strings} />
+            <div className="ft-diagram__canvas">
+                <Viewer graph={state.graph} strings={config.strings} />
+            </div>
+        </>
     );
 }
 

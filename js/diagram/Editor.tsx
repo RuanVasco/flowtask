@@ -43,6 +43,8 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { post, RefusedError, withId, type Answer } from './api';
 import { canvasProps, colorMode } from './canvas';
+import { StepPanel, type StepFields } from './StepPanel';
+import { Toolbar } from './Toolbar';
 import { NODE_SIZES, withPositions } from './layout';
 import { conditionFor, toFlowEdge, toFlowEdges, toFlowNode, toFlowNodes, type StepFlowNode } from './mapping';
 import type { EditorConfig, Graph, GraphEdge, GraphNode, NodeType } from './types';
@@ -52,7 +54,7 @@ const PALETTE: NodeType[] = ['task', 'approval', 'end'];
 
 const DRAG_TYPE = 'application/x-flowtask-step';
 
-interface Notice {
+export interface Notice {
     kind: 'error' | 'warning';
     messages: string[];
 }
@@ -74,8 +76,19 @@ function offOrigin(position: Position): Position {
 interface EditorProps {
     config: EditorConfig;
     graph: Graph;
-    /** Loads the saved graph again, to undo a change the server refused. */
-    reload: () => void;
+    /**
+     * Loads the saved graph again, to undo a change the server refused or
+     * show what a change did elsewhere; the notice and the selected step
+     * are kept.
+     */
+    reload: (keep?: Kept) => void;
+    /** What the previous editor asked to keep across the reload. */
+    kept?: Kept;
+}
+
+export interface Kept {
+    notice?: Notice | null;
+    selected?: string;
 }
 
 /**
@@ -91,12 +104,16 @@ export function Editor(props: EditorProps) {
     );
 }
 
-function EditorCanvas({ config, graph, reload }: EditorProps) {
+function EditorCanvas({ config, graph, reload, kept }: EditorProps) {
     const { strings, urls, icons } = config;
     const placed = useMemo(() => withPositions(graph), [graph]);
-    const [nodes, setNodes, onNodesChange] = useNodesState<StepFlowNode>(toFlowNodes(placed, strings));
+    const [nodes, setNodes, onNodesChange] = useNodesState<StepFlowNode>(
+        toFlowNodes(placed, strings, true).map((node) => (node.id === kept?.selected ? { ...node, selected: true } : node)),
+    );
     const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(toFlowEdges(placed, strings));
-    const [notice, setNotice] = useState<Notice | null>(null);
+    const [notice, setNotice] = useState<Notice | null>(kept?.notice ?? null);
+    /** Side panel saves on their way, which publishing waits for. */
+    const saving = useRef(new Set<Promise<unknown>>());
     const { screenToFlowPosition, deleteElements } = useReactFlow<StepFlowNode, Edge>();
 
     const fail = useCallback(
@@ -253,7 +270,7 @@ function EditorCanvas({ config, graph, reload }: EditorProps) {
                     x: Math.round(point.x - size.width / 2),
                     y: Math.round(point.y - size.height / 2),
                 });
-                setNodes((current) => [...current, toFlowNode(answer.node, strings)]);
+                setNodes((current) => [...current, toFlowNode(answer.node, strings, true)]);
                 report(answer);
             } catch (error) {
                 fail(error);
@@ -262,10 +279,84 @@ function EditorCanvas({ config, graph, reload }: EditorProps) {
         [screenToFlowPosition, urls, strings, setNodes, report, fail],
     );
 
+    /**
+     * Saves the side panel. A new type may drop transitions the step can no
+     * longer fire, so the graph is loaded again then.
+     */
+    const saveStep = useCallback(
+        async (id: number, fields: StepFields): Promise<boolean> => {
+            const before = nodes.find((node) => node.id === String(id))?.data.step;
+            const request = post<Answer & { node: GraphNode | null }>(withId(urls.update_node, id), fields);
+            saving.current.add(request);
+            try {
+                const answer = await request;
+                const warnings = answer.warnings ?? [];
+                const node = answer.node;
+                if (node === null || before === undefined || before.type !== node.type) {
+                    // A new type may have dropped transitions: show the graph as saved.
+                    reload({ notice: warnings.length > 0 ? { kind: 'warning', messages: warnings } : null, selected: String(id) });
+                } else {
+                    report(answer);
+                    setNodes((current) =>
+                        current.map((item) =>
+                            item.id === String(id)
+                                ? { ...item, data: { ...item.data, failed: false, step: { ...node, x: before.x, y: before.y } } }
+                                : item,
+                        ),
+                    );
+                }
+
+                return true;
+            } catch (error) {
+                fail(error);
+
+                return false;
+            } finally {
+                saving.current.delete(request);
+            }
+        },
+        [nodes, urls, report, fail, reload, setNodes],
+    );
+
+    /**
+     * Publishes the draft; on failure every step with a problem is
+     * highlighted and the problems are listed (spec 002, AC-6).
+     */
+    const [publishing, setPublishing] = useState(false);
+    const publish = useCallback(async () => {
+        const url = config.actions?.publish?.url;
+        if (url === undefined) {
+            return;
+        }
+
+        setPublishing(true);
+        try {
+            // A field left by clicking Publish saves on blur: publish what it saved.
+            await Promise.allSettled([...saving.current]);
+            await post(url);
+            window.location.reload();
+        } catch (error) {
+            setPublishing(false);
+            const problems = error instanceof RefusedError ? (error.data as { problems?: { node: number }[] } | null)?.problems : undefined;
+            const failed = new Set((problems ?? []).map((problem) => String(problem.node)));
+            setNodes((current) => current.map((node) => ({ ...node, data: { ...node.data, failed: failed.has(node.id) } })));
+            if (error instanceof RefusedError && error.messages.length > 0) {
+                setNotice({ kind: 'error', messages: [strings.publish_failed, ...error.messages] });
+            } else {
+                fail(error);
+            }
+        }
+    }, [config.actions, setNodes, strings, fail]);
+
     const selectedNodes = nodes.filter((node) => node.selected && node.deletable !== false);
     const selectedEdges = edges.filter((edge) => edge.selected);
+    const selected = nodes.filter((node) => node.selected);
+    const configured = selected.length === 1 ? selected[0] : undefined;
 
     return (
+        <>
+        <Toolbar version={config.version} actions={config.actions} strings={strings} onPublish={() => void publish()} busy={publishing} />
+        <div className="ft-diagram__canvas">
         <ReactFlow
             {...canvasProps}
             className="ft-diagram--editor"
@@ -300,8 +391,8 @@ function EditorCanvas({ config, graph, reload }: EditorProps) {
                     </div>
                 ))}
             </Panel>
-            {(selectedNodes.length > 0 || selectedEdges.length > 0) && (
-                <Panel position="top-right">
+            <Panel position="top-right" className="ft-side">
+                {(selectedNodes.length > 0 || selectedEdges.length > 0) && (
                     <button
                         type="button"
                         className="btn btn-sm btn-outline-danger"
@@ -310,8 +401,18 @@ function EditorCanvas({ config, graph, reload }: EditorProps) {
                         <i className="ti ti-trash" aria-hidden="true"></i>
                         <span>{strings.delete}</span>
                     </button>
-                </Panel>
-            )}
+                )}
+                {configured !== undefined ? (
+                    <StepPanel
+                        key={configured.id}
+                        step={configured.data.step}
+                        config={config}
+                        onSave={(fields) => saveStep(Number(configured.id), fields)}
+                    />
+                ) : (
+                    <div className="ft-panel small text-secondary">{strings.panel_hint}</div>
+                )}
+            </Panel>
             {notice !== null && (
                 <Panel position="top-center">
                     <div className={`alert alert-${notice.kind === 'error' ? 'danger' : 'warning'} ft-notice`} role="alert">
@@ -325,5 +426,7 @@ function EditorCanvas({ config, graph, reload }: EditorProps) {
                 </Panel>
             )}
         </ReactFlow>
+        </div>
+        </>
     );
 }

@@ -34,24 +34,28 @@ import type { Condition, Graph, GraphEdge, GraphNode, NodeType, Strings } from '
 export interface StepData extends Record<string, unknown> {
     step: GraphNode;
     strings: Strings;
+    /** Show what keeps the step from being published (editor). */
+    markers?: boolean;
+    /** Pointed at by a failed publication (spec 002, AC-6). */
+    failed?: boolean;
 }
 
 export type StepFlowNode = Node<StepData, 'step'>;
 
-export function toFlowNode(step: GraphNode, strings: Strings): StepFlowNode {
+export function toFlowNode(step: GraphNode, strings: Strings, markers = false): StepFlowNode {
     return {
         id: String(step.id),
         type: 'step',
         position: { x: step.x, y: step.y },
-        data: { step, strings },
+        data: { step, strings, markers },
         // The START step is created with the draft and stays (spec 002, AC-5).
         deletable: step.type !== 'start',
         ...NODE_SIZES[step.type],
     };
 }
 
-export function toFlowNodes(graph: Graph, strings: Strings): StepFlowNode[] {
-    return graph.nodes.map((step) => toFlowNode(step, strings));
+export function toFlowNodes(graph: Graph, strings: Strings, markers = false): StepFlowNode[] {
+    return graph.nodes.map((step) => toFlowNode(step, strings, markers));
 }
 
 /**

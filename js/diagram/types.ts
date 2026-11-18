@@ -40,6 +40,20 @@ export type Condition = 'always' | 'completed' | 'approved' | 'rejected';
 /** Status of the latest pass of an instance through a step (ticket tab). */
 export type StepState = 'active' | 'done' | 'skipped' | 'cancelled';
 
+/** Values of the side panel, with the names its pickers show. */
+export interface StepConfig {
+    actor_type: string;
+    users_id: number;
+    users_name: string;
+    groups_id: number;
+    groups_name: string;
+    manager_level: number;
+    missing_manager_behavior: string;
+    tasktemplates_id: number;
+    tasktemplates_name: string;
+    solve_ticket: boolean;
+}
+
 export interface GraphNode {
     id: number;
     type: NodeType;
@@ -49,6 +63,10 @@ export interface GraphNode {
     x: number;
     y: number;
     state: StepState | null;
+    /** What keeps the step from being published (editor only). */
+    problems?: string[];
+    /** Values of the side panel (editor only). */
+    config?: StepConfig;
 }
 
 export interface GraphEdge {
@@ -75,15 +93,69 @@ export interface Strings {
     palette: string;
     delete: string;
     close: string;
+    edit: string;
+    publish: string;
+    discard: string;
+    publish_failed: string;
+    panel_hint: string;
+    start_hint: string;
+    name: string;
+    type: string;
+    actor: string;
+    user: string;
+    group: string;
+    manager_level: string;
+    manager_help: string;
+    missing_manager: string;
+    task_template: string;
+    solve_ticket: string;
+    none: string;
+    search: string;
+    no_results: string;
+    problems: string;
 }
 
-/** Endpoints of the editor; `{id}` stands for the item to delete. */
+/** Endpoints of the editor; `{id}` stands for the item to change. */
 export interface EditUrls {
     add_node: string;
+    update_node: string;
     positions: string;
     add_transition: string;
     delete_node: string;
     delete_transition: string;
+}
+
+/** A GLPI dropdown endpoint and the parameters it checks (IDOR token, rights, entities). */
+export interface Picker {
+    url: string;
+    params: Record<string, string>;
+}
+
+export type PickerKind = 'user' | 'group' | 'tasktemplate';
+
+export interface Options {
+    step_types: Record<string, string>;
+    actor_types: Record<string, string>;
+    behaviors: Record<string, string>;
+}
+
+/** A form posted to a GLPI page (version form), as the version card does. */
+export interface FormAction {
+    url: string;
+    fields: Record<string, string | number>;
+    confirm?: string;
+}
+
+export interface Actions {
+    edit?: FormAction;
+    discard?: FormAction;
+    publish?: { url: string };
+}
+
+export interface VersionInfo {
+    label: string;
+    status: 'draft' | 'published' | 'archived';
+    status_label: string;
 }
 
 interface BaseConfig {
@@ -91,10 +163,18 @@ interface BaseConfig {
     strings: Strings;
     /** Tabler icon of each step type. */
     icons: Record<NodeType, string>;
+    /** Only on the workflow, which offers the version actions. */
+    version?: VersionInfo;
+    actions?: Actions;
 }
 
 export type ViewerConfig = BaseConfig & { mode: 'viewer' };
 
-export type EditorConfig = BaseConfig & { mode: 'editor'; urls: EditUrls };
+export type EditorConfig = BaseConfig & {
+    mode: 'editor';
+    urls: EditUrls;
+    pickers: Record<PickerKind, Picker>;
+    options: Options;
+};
 
 export type DiagramConfig = ViewerConfig | EditorConfig;
