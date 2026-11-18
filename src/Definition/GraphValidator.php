@@ -50,6 +50,18 @@ final readonly class GraphValidator
      */
     public function validateVersion(int $versions_id): array
     {
+        return array_column($this->findVersionProblems($versions_id), 'message');
+    }
+
+    /**
+     * Problems with the step each one is about, so the diagram can point at
+     * it (spec 002, AC-6).
+     *
+     * @return list<array{message: string, node: int}> `node` is 0 for a
+     *                                                  problem of the whole graph
+     */
+    public function findVersionProblems(int $versions_id): array
+    {
         $nodes = [];
         foreach ($this->db->request(['FROM' => Node::getTable(), 'WHERE' => [Node::$items_id => $versions_id]]) as $row) {
             if (!is_array($row)) {
@@ -68,7 +80,7 @@ final readonly class GraphValidator
             $transitions[] = $row;
         }
 
-        return $this->validate($nodes, $transitions);
+        return $this->findProblems($nodes, $transitions);
     }
 
     /**
@@ -79,6 +91,17 @@ final readonly class GraphValidator
      */
     public function validate(array $nodes, array $transitions): array
     {
+        return array_column($this->findProblems($nodes, $transitions), 'message');
+    }
+
+    /**
+     * @param array<int, array<mixed>> $nodes       Step rows, keyed by id
+     * @param list<array<mixed>>       $transitions Transition rows
+     *
+     * @return list<array{message: string, node: int}>
+     */
+    private function findProblems(array $nodes, array $transitions): array
+    {
         $errors = [];
 
         $starts = array_keys(array_filter(
@@ -86,7 +109,7 @@ final readonly class GraphValidator
             static fn(array $node): bool => Fields::string($node, 'node_type') === NodeType::START->value,
         ));
         if (count($starts) !== 1) {
-            $errors[] = __('The version must have exactly one start step.', 'flowtask');
+            $errors[] = ['message' => __('The version must have exactly one start step.', 'flowtask'), 'node' => 0];
         }
 
         $has_end = array_filter(
@@ -94,7 +117,7 @@ final readonly class GraphValidator
             static fn(array $node): bool => Fields::string($node, 'node_type') === NodeType::END->value,
         ) !== [];
         if (!$has_end) {
-            $errors[] = __('The version needs at least one end step.', 'flowtask');
+            $errors[] = ['message' => __('The version needs at least one end step.', 'flowtask'), 'node' => 0];
         }
 
         /** @var array<int, list<string>> $outgoing conditions fired by each source step */
@@ -109,7 +132,7 @@ final readonly class GraphValidator
             // gone since: check them again rather than trust them.
             $error = $this->getTransitionError($nodes, $source, $target, Fields::string($transition, 'trigger_condition'));
             if ($error !== null) {
-                $errors[] = $error;
+                $errors[] = ['message' => $error, 'node' => isset($nodes[$source]) ? $source : 0];
 
                 continue;
             }
@@ -122,7 +145,7 @@ final readonly class GraphValidator
             $name = Fields::string($node, 'name');
 
             foreach (StepConfiguration::getErrors($node) as $error) {
-                $errors[] = sprintf(__('Step "%1$s": %2$s', 'flowtask'), $name, $error);
+                $errors[] = ['message' => sprintf(__('Step "%1$s": %2$s', 'flowtask'), $name, $error), 'node' => $id];
             }
 
             $type = NodeType::tryFrom(Fields::string($node, 'node_type'));
@@ -132,11 +155,10 @@ final readonly class GraphValidator
 
             foreach (TransitionCondition::forSource($type) as $condition) {
                 if (!in_array($condition->value, $outgoing[$id] ?? [], true)) {
-                    $errors[] = sprintf(
-                        __('Step "%1$s" has no "%2$s" transition.', 'flowtask'),
-                        $name,
-                        $condition->label(),
-                    );
+                    $errors[] = [
+                        'message' => sprintf(__('Step "%1$s" has no "%2$s" transition.', 'flowtask'), $name, $condition->label()),
+                        'node'    => $id,
+                    ];
                 }
             }
         }
@@ -145,10 +167,10 @@ final readonly class GraphValidator
             $reached = $this->reachableFrom($starts[0], $edges);
             foreach ($nodes as $id => $node) {
                 if (!isset($reached[$id])) {
-                    $errors[] = sprintf(
-                        __('Step "%s" cannot be reached from the start step.', 'flowtask'),
-                        Fields::string($node, 'name'),
-                    );
+                    $errors[] = [
+                        'message' => sprintf(__('Step "%s" cannot be reached from the start step.', 'flowtask'), Fields::string($node, 'name')),
+                        'node'    => $id,
+                    ];
                 }
             }
         }
