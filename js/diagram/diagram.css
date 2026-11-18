@@ -1,0 +1,258 @@
+
+/**
+ * -------------------------------------------------------------------------
+ * Flowtask plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Flowtask.
+ *
+ * Flowtask is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Flowtask is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Flowtask. If not, see <https://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2026 by Ruan Vasconcelos.
+ * @license   GPLv3+ https://www.gnu.org/licenses/gpl-3.0.html
+ * @link      https://github.com/RuanVasco/flowtask
+ * -------------------------------------------------------------------------
+ */
+
+/*
+ * Colors come from GLPI's theme variables (Tabler), so the diagram follows
+ * light and dark themes (spec 002, look).
+ */
+.flowtask-diagram {
+    --ft-surface: var(--tblr-bg-surface, #fff);
+    --ft-canvas: var(--tblr-bg-surface-secondary, #f6f8fb);
+    --ft-text: var(--tblr-body-color, #1d273b);
+    --ft-muted: var(--tblr-secondary, #667382);
+    --ft-border: var(--tblr-border-color, #dce1e7);
+    --ft-primary: var(--tblr-primary, #206bc4);
+    --ft-success: var(--tblr-success, #2fb344);
+    --ft-warning: var(--tblr-warning, #f76707);
+    --ft-danger: var(--tblr-danger, #d63939);
+    --ft-task: var(--tblr-blue, #206bc4);
+    --ft-approval: var(--tblr-orange, #f76707);
+    --xy-background-color: var(--ft-canvas);
+    --xy-background-pattern-dots-color: var(--ft-border);
+    --xy-edge-stroke: var(--ft-muted);
+    --xy-edge-stroke-width: 1.5;
+    --xy-edge-label-background-color: var(--ft-surface);
+    --xy-edge-label-color: var(--ft-text);
+    --xy-handle-background-color: var(--ft-muted);
+    --xy-handle-border-color: var(--ft-surface);
+    --xy-controls-button-background-color: var(--ft-surface);
+    --xy-controls-button-background-color-hover: var(--ft-canvas);
+    --xy-controls-button-color: var(--ft-text);
+    --xy-controls-button-color-hover: var(--ft-text);
+    --xy-controls-button-border-color: var(--ft-border);
+    --xy-attribution-background-color: transparent;
+
+    position: relative;
+    height: 420px;
+    overflow: hidden;
+    color: var(--ft-text);
+}
+
+.ft-diagram__message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--ft-muted);
+}
+
+.ft-node {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    color: var(--ft-text);
+    font-size: 0.8125rem;
+}
+
+.ft-node--box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 12px;
+    background: var(--ft-surface);
+    border: 1px solid var(--ft-border);
+    border-left: 4px solid var(--ft-task);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+.ft-node--approval {
+    border-left-color: var(--ft-approval);
+}
+
+.ft-node__type {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--ft-muted);
+    font-size: 0.75rem;
+}
+
+.ft-node__diamond {
+    width: 8px;
+    height: 8px;
+    margin-right: 2px;
+    background: var(--ft-approval);
+    transform: rotate(45deg);
+}
+
+.ft-node__name {
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ft-node__actor {
+    overflow: hidden;
+    color: var(--ft-muted);
+    font-size: 0.75rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ft-node--circle {
+    display: flex;
+    justify-content: center;
+}
+
+.ft-node__circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background: var(--ft-surface);
+    border: 2px solid var(--ft-success);
+    border-radius: 50%;
+    font-size: 1.25rem;
+}
+
+.ft-node--end .ft-node__circle {
+    border: 4px solid var(--ft-danger);
+}
+
+.ft-node__label {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    font-weight: 600;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Handles of the circles sit on the circle, not on the edge of the box. */
+.ft-node--circle .react-flow__handle-left {
+    left: 32px;
+}
+
+.ft-node--circle .react-flow__handle-right {
+    right: 32px;
+}
+
+.ft-handle--approved {
+    --xy-handle-background-color: var(--ft-success);
+}
+
+.ft-handle--rejected {
+    --xy-handle-background-color: var(--ft-danger);
+}
+
+.ft-node__state {
+    margin-left: auto;
+    padding: 0 6px;
+    border-radius: 4px;
+    background: var(--ft-canvas);
+    color: var(--ft-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+}
+
+.ft-node--circle .ft-node__state {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    margin-left: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+/* Instance progress on the ticket tab (spec 002, AC-8). */
+.ft-node--active.ft-node--box,
+.ft-node--active .ft-node__circle {
+    border-color: var(--ft-primary);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--ft-primary) 25%, transparent);
+}
+
+.ft-node--active .ft-node__state {
+    background: var(--ft-primary);
+    color: #fff;
+}
+
+.ft-node--done .ft-node__state {
+    background: color-mix(in srgb, var(--ft-success) 15%, transparent);
+    color: var(--ft-success);
+}
+
+.ft-node--skipped {
+    opacity: 0.75;
+}
+
+.ft-node--skipped.ft-node--box {
+    border-style: dashed;
+}
+
+.ft-node--skipped .ft-node__state {
+    background: color-mix(in srgb, var(--ft-warning) 15%, transparent);
+    color: var(--ft-warning);
+}
+
+
+
+.react-flow__edge.ft-edge--taken .react-flow__edge-path {
+    stroke: var(--ft-primary);
+    stroke-width: 2.5;
+}
+
+.ft-diagram--viewer .react-flow__handle {
+    opacity: 0;
+}
+
+.ft-edge-label {
+    position: absolute;
+    padding: 0 4px;
+    border-radius: 4px;
+    background: var(--ft-surface);
+    color: var(--ft-text);
+    font-size: 0.75rem;
+    font-weight: 600;
+    pointer-events: all;
+}
+
+.ft-edge-label--approved {
+    color: var(--ft-success);
+}
+
+.ft-edge-label--rejected {
+    color: var(--ft-danger);
+}
