@@ -93,6 +93,7 @@ final class DiagramTest extends DbTestCase
 
         $running = $this->instanceGraph($instance);
         $this->assertSame(['done', 'active', null], array_column($running['nodes'], 'state'));
+        $this->assertArrayNotHasKey('config', $running['nodes'][1], 'The editor data stays out of tickets');
         $this->assertSame([true, false], array_column($running['edges'], 'taken'));
 
         $step = InstanceStep::getActiveForInstance($instance->getID());
