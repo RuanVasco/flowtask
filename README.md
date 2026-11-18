@@ -26,6 +26,8 @@ O Flowtask executa workflows dentro dos chamados do GLPI:
 1. Baixe a última release e extraia em `plugins/flowtask` (ou `marketplace/flowtask`).
 2. Em **Configurar > Plugins**, instale e ative o Flowtask.
 
+A partir de um clone do repositório, rode `npm install` na pasta do plugin (Node.js 20+) para gerar o diagrama dos fluxos; o arquivo da release já o traz pronto.
+
 ### Desenvolvimento
 
 Veja [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -49,6 +51,8 @@ Flowtask runs workflows inside GLPI tickets:
 
 1. Download the latest release and extract it into `plugins/flowtask` (or `marketplace/flowtask`).
 2. In **Setup > Plugins**, install and enable Flowtask.
+
+From a git checkout, run `npm install` in the plugin directory (Node.js 20+) to build the workflow diagram; the release archive ships it built.
 
 ### Development
 
