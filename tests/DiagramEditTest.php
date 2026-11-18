@@ -30,6 +30,7 @@
 
 namespace GlpiPlugin\Flowtask\Tests;
 
+use Glpi\Controller\GenericFormController;
 use Glpi\Exception\Http\AccessDeniedHttpException;
 use Glpi\Tests\DbTestCase;
 use GlpiPlugin\Flowtask\Controller\DiagramEditController;
@@ -38,6 +39,7 @@ use GlpiPlugin\Flowtask\Enum\TransitionCondition;
 use GlpiPlugin\Flowtask\Node;
 use GlpiPlugin\Flowtask\Transition;
 use GlpiPlugin\Flowtask\Workflow;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -232,6 +234,97 @@ final class DiagramEditTest extends DbTestCase
         $this->assertSame([0, 0], $this->position($start));
         $this->assertTrue((new Transition())->getFromDB($transition->getID()));
         $this->assertSame(3, countElementsInTable(Node::getTable(), ['plugin_flowtask_workflowversions_id' => $draft->getID()]));
+    }
+
+    /**
+     * The step and transition forms are gone; GLPI's generic item pages that
+     * would replace them are closed (spec 002, AC-12).
+     *
+     * @return iterable<string, array{class-string<Node|Transition>, string}>
+     */
+    public static function formActionProvider(): iterable
+    {
+        foreach ([Node::class, Transition::class] as $class) {
+            foreach (['add', 'update', 'purge'] as $action) {
+                yield sprintf('%s %s', $class, $action) => [$class, $action];
+            }
+        }
+    }
+
+    /**
+     * @param class-string<Node|Transition> $class
+     */
+    #[DataProvider('formActionProvider')]
+    public function testOldFormURLsChangeNothing(string $class, string $action): void
+    {
+        $this->login();
+        $draft = $this->createDraft();
+        $start = $this->getStartNode($draft);
+        $end   = $this->createNode($draft, NodeType::END);
+        $item  = $class === Node::class ? $end : $this->createTransition($start, $end, TransitionCondition::ALWAYS);
+        $count = countElementsInTable($class::getTable(), ['plugin_flowtask_workflowversions_id' => $draft->getID()]);
+
+        $request = Request::create('/', 'POST', [
+            $action                               => 1,
+            'id'                                  => $action === 'add' ? 0 : $item->getID(),
+            'name'                                => 'Changed',
+            'node_type'                           => NodeType::END->value,
+            'plugin_flowtask_workflowversions_id' => $draft->getID(),
+        ]);
+        $request->attributes->set('class', $class);
+
+        try {
+            (new GenericFormController())($request);
+            $this->fail('The generic form must be closed.');
+        } catch (AccessDeniedHttpException) {
+            $this->assertSame($count, countElementsInTable($class::getTable(), ['plugin_flowtask_workflowversions_id' => $draft->getID()]));
+            $this->assertNotSame('Changed', $this->reloadItem($item)->fields['name'] ?? null);
+        }
+    }
+
+    /**
+     * The API, massive actions and every other generic entry point check
+     * these rights (spec 002, AC-12).
+     */
+    public function testGenericEntryPointsAreClosed(): void
+    {
+        $this->login();
+        $draft = $this->createDraft();
+        $start = $this->getStartNode($draft);
+        $end   = $this->createNode($draft, NodeType::END);
+
+        foreach ([Node::class, Transition::class] as $class) {
+            $this->assertFalse($class::canView());
+            $this->assertFalse($class::canCreate());
+            $this->assertFalse($class::canUpdate());
+            $this->assertFalse($class::canDelete());
+            $this->assertFalse($class::canPurge());
+        }
+
+        $this->assertFalse($end->can($end->getID(), UPDATE));
+        $this->assertFalse($end->can($end->getID(), PURGE));
+        $input = [
+            'plugin_flowtask_workflowversions_id' => $draft->getID(),
+            'plugin_flowtask_nodes_id_source'     => $start->getID(),
+            'plugin_flowtask_nodes_id_target'     => $end->getID(),
+        ];
+        $this->assertFalse((new Transition())->can(-1, CREATE, $input));
+    }
+
+    public function testStepsAndTransitionsHaveNoTabsAnyMore(): void
+    {
+        $this->login();
+        $draft    = $this->createDraft();
+        $workflow = $draft->getItem();
+        $this->assertInstanceOf(Workflow::class, $workflow);
+
+        foreach ([$workflow, $draft] as $item) {
+            $tabs = array_keys($item->defineAllTabs());
+            $this->assertSame([], array_filter(
+                $tabs,
+                static fn(string $tab): bool => str_starts_with($tab, Node::class) || str_starts_with($tab, Transition::class),
+            ));
+        }
     }
 
     public function testChangesNeedTheUpdateRightOnWorkflows(): void
