@@ -88,10 +88,12 @@ final class StepConfiguration
      */
     public static function getErrors(array $fields): array
     {
-        $type = NodeType::tryFrom(Fields::string($fields, 'node_type'));
-        if ($type === null) {
-            return [__('The step type is invalid.', 'flowtask')];
+        $type_error = self::getTypeError($fields);
+        if ($type_error !== null) {
+            return [$type_error];
         }
+
+        $type = NodeType::from(Fields::string($fields, 'node_type'));
 
         $errors = [];
 
@@ -108,6 +110,19 @@ final class StepConfiguration
         }
 
         return $errors;
+    }
+
+    /**
+     * The only problem that keeps a step from being saved (spec 002: the
+     * others are checked when publishing).
+     *
+     * @param array<mixed> $fields
+     */
+    public static function getTypeError(array $fields): ?string
+    {
+        return NodeType::tryFrom(Fields::string($fields, 'node_type')) === null
+            ? __('The step type is invalid.', 'flowtask')
+            : null;
     }
 
     private static function needsActor(?NodeType $type): bool

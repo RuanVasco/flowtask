@@ -306,6 +306,7 @@ final class DefinitionTest extends DbTestCase
             'node_type'                           => NodeType::START->value,
         ]));
         $this->assertFalse($start->update(['id' => $start->getID(), 'name' => 'Renamed']));
+        $this->assertTrue($start->update(['id' => $start->getID(), 'position_x' => 40, 'position_y' => 80]), 'Moved on the diagram');
         $this->assertFalse($start->canUpdateItem());
         $this->assertFalse($start->canPurgeItem());
         $this->assertErrorMessages([
@@ -314,18 +315,24 @@ final class DefinitionTest extends DbTestCase
         ]);
     }
 
-    public function testStepConfigurationIsRequiredAndNormalized(): void
+    public function testIncompleteStepIsSavedAndConfigurationNormalized(): void
     {
         $this->login();
 
         $draft = $this->createDraft();
 
-        $this->assertFalse((new Node())->add([
+        // Spec 002: completeness is checked on publish, the diagram adds steps first.
+        $this->assertNotFalse((new Node())->add([
             'plugin_flowtask_workflowversions_id' => $draft->getID(),
             'name'                                => 'Incomplete',
             'node_type'                           => NodeType::TASK->value,
         ]));
-        $this->assertErrorMessages(['The step needs an actor.', 'A task step needs a task template.']);
+        $this->assertFalse((new Node())->add([
+            'plugin_flowtask_workflowversions_id' => $draft->getID(),
+            'name'                                => 'Unknown',
+            'node_type'                           => 'unknown',
+        ]));
+        $this->assertErrorMessages(['The step type is invalid.']);
 
         $approval = $this->createNode($draft, NodeType::APPROVAL, [
             'actor_type'       => ActorType::REQUESTER_MANAGER->value,

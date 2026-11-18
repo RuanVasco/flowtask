@@ -57,6 +57,9 @@ class Node extends CommonDBChild
     /** Foreign keys to core items, reset by GLPI when those items are purged. */
     private const REFERENCE_FIELDS = ['users_id', 'groups_id', 'tasktemplates_id'];
 
+    /** Place of the step on the diagram (spec 002), the only change the START step takes. */
+    public const POSITION_FIELDS = ['position_x', 'position_y'];
+
     public static function getTypeName($nb = 0)
     {
         return _n('Step', 'Steps', $nb, 'flowtask');
@@ -248,6 +251,10 @@ class Node extends CommonDBChild
             return false;
         }
 
+        if ($this->isPositionChange($input)) {
+            return $input;
+        }
+
         if ($this->isStart() || Fields::string($input, 'node_type') === NodeType::START->value) {
             Session::addMessageAfterRedirect(__s('The start step cannot be edited.', 'flowtask'), false, ERROR);
 
@@ -308,16 +315,39 @@ class Node extends CommonDBChild
      */
     private function withConfiguration(array $input, array $fields): array|false
     {
-        $errors = StepConfiguration::getErrors($fields);
-        if ($errors !== []) {
-            foreach ($errors as $error) {
-                Session::addMessageAfterRedirect(htmlescape($error), false, ERROR);
-            }
+        // An incomplete step is saved: the diagram adds it first and the
+        // publication checks it (spec 002, persistence and rules).
+        $type_error = StepConfiguration::getTypeError($fields);
+        if ($type_error !== null) {
+            Session::addMessageAfterRedirect(htmlescape($type_error), false, ERROR);
 
             return false;
         }
 
         return array_merge($input, StepConfiguration::normalize($fields));
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     */
+    private function isPositionChange(array $input): bool
+    {
+        $changes = $this->getChangedKeys($input);
+
+        return $changes !== [] && array_diff($changes, self::POSITION_FIELDS) === [];
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     *
+     * @return list<string>
+     */
+    private function getChangedKeys(array $input): array
+    {
+        return array_map(strval(...), array_values(array_filter(
+            array_keys($input),
+            static fn(int|string $key): bool => $key !== 'id' && !str_starts_with((string) $key, '_'),
+        )));
     }
 
     /**

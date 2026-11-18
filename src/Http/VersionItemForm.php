@@ -30,12 +30,14 @@
 
 namespace GlpiPlugin\Flowtask\Http;
 
+use GlpiPlugin\Flowtask\Definition\StepConfiguration;
 use GlpiPlugin\Flowtask\Node;
 use GlpiPlugin\Flowtask\Support\Fields;
 use GlpiPlugin\Flowtask\Transition;
 use GlpiPlugin\Flowtask\Workflow;
 use GlpiPlugin\Flowtask\WorkflowVersion;
 use Html;
+use Session;
 
 /**
  * Form page of the items that belong to a version (steps and transitions).
@@ -60,10 +62,15 @@ final class VersionItemForm
                 Html::back();
             }
 
+            self::warnIfIncomplete($item);
+
             Html::redirect(self::getWorkflowURL(Fields::int($post, $item::$items_id)));
         } elseif (isset($post['update'])) {
             $item->check($id, UPDATE);
-            $item->update($post);
+            if ($item->update($post)) {
+                self::warnIfIncomplete($item);
+            }
+
             Html::back();
         } elseif (isset($post['purge'])) {
             $item->check($id, PURGE);
@@ -80,6 +87,25 @@ final class VersionItemForm
         /** @phpstan-ignore argument.type (display() takes -1 for a new item, and extra keys are passed to showForm()) */
         $item->display(['id' => $id] + $input);
         Html::footer();
+    }
+
+    /**
+     * An incomplete step is saved (spec 002) but cannot be published yet:
+     * the form says why, where the change was made.
+     */
+    private static function warnIfIncomplete(Node|Transition $item): void
+    {
+        if (!$item instanceof Node) {
+            return;
+        }
+
+        foreach (StepConfiguration::getErrors($item->fields) as $error) {
+            Session::addMessageAfterRedirect(
+                htmlescape(sprintf(__('This step cannot be published yet: %s', 'flowtask'), $error)),
+                false,
+                WARNING,
+            );
+        }
     }
 
     /**
