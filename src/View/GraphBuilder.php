@@ -31,6 +31,7 @@
 namespace GlpiPlugin\Flowtask\View;
 
 use DBmysql;
+use GlpiPlugin\Flowtask\Definition\StepConfiguration;
 use GlpiPlugin\Flowtask\Enum\NodeType;
 use GlpiPlugin\Flowtask\Enum\StepStatus;
 use GlpiPlugin\Flowtask\Enum\TransitionCondition;
@@ -40,12 +41,15 @@ use GlpiPlugin\Flowtask\Node;
 use GlpiPlugin\Flowtask\Support\Fields;
 use GlpiPlugin\Flowtask\Transition;
 use GlpiPlugin\Flowtask\WorkflowVersion;
+use Group;
+use TaskTemplate;
+use User;
 
 /**
  * Graph of a version as the diagram reads it (spec 002), with the progress
  * of an instance when it is shown on a ticket (AC-8).
  *
- * @phpstan-type GraphNode array{id: int, type: string, name: string, icon: string, actor: string, x: int, y: int, state: string|null}
+ * @phpstan-type GraphNode array{id: int, type: string, name: string, icon: string, actor: string, x: int, y: int, state: string|null, problems?: list<string>, config?: array<string, mixed>}
  * @phpstan-type GraphEdge array{id: int, source: int, target: int, condition: string, taken: bool}
  * @phpstan-type Graph array{nodes: list<GraphNode>, edges: list<GraphEdge>}
  */
@@ -56,14 +60,14 @@ final readonly class GraphBuilder
     /**
      * @return Graph
      */
-    public function build(WorkflowVersion $version, ?Instance $instance = null): array
+    public function build(WorkflowVersion $version, ?Instance $instance = null, bool $editable = false): array
     {
         [$states, $taken] = $instance instanceof Instance ? $this->progress($instance) : [[], []];
 
         $nodes    = [];
         $start_id = 0;
         foreach (Node::getForVersion($version->getID()) as $node) {
-            $data = $this->node($node, $states[$node->getID()] ?? null);
+            $data = $this->node($node, $states[$node->getID()] ?? null, $editable);
             if ($data === null) {
                 continue;
             }
@@ -119,16 +123,20 @@ final readonly class GraphBuilder
     /**
      * A step as the diagram draws it, or null when it has no valid type.
      *
+     * @param bool $editable Add what the editor needs: the problems that
+     *                       keep the step from being published and the
+     *                       values of the side panel
+     *
      * @return GraphNode|null
      */
-    public function node(Node $node, ?string $state = null): ?array
+    public function node(Node $node, ?string $state = null, bool $editable = false): ?array
     {
         $type = $node->getNodeType();
         if (!$type instanceof NodeType) {
             return null;
         }
 
-        return [
+        $data = [
             'id'    => $node->getID(),
             'type'  => $type->value,
             'name'  => $node->getName(),
@@ -137,6 +145,36 @@ final readonly class GraphBuilder
             'x'     => Fields::int($node->fields, 'position_x'),
             'y'     => Fields::int($node->fields, 'position_y'),
             'state' => $state,
+        ];
+
+        return $editable ? $data + $this->editorData($node) : $data;
+    }
+
+    /**
+     * @return array{problems: list<string>, config: array<string, mixed>}
+     */
+    private function editorData(Node $node): array
+    {
+        $users_id         = Fields::int($node->fields, 'users_id');
+        $groups_id        = Fields::int($node->fields, 'groups_id');
+        $tasktemplates_id = Fields::int($node->fields, 'tasktemplates_id');
+
+        return [
+            // What keeps the step from being published (spec 002, warning markers).
+            'problems' => StepConfiguration::getErrors($node->fields),
+            // Values of the side panel, with the names its pickers show.
+            'config'   => [
+                'actor_type'               => Fields::string($node->fields, 'actor_type'),
+                'users_id'                 => $users_id,
+                'users_name'               => $users_id > 0 ? User::getFriendlyNameById($users_id) : '',
+                'groups_id'                => $groups_id,
+                'groups_name'              => $groups_id > 0 ? Group::getFriendlyNameById($groups_id) : '',
+                'manager_level'            => max(1, Fields::int($node->fields, 'manager_level')),
+                'missing_manager_behavior' => Fields::string($node->fields, 'missing_manager_behavior'),
+                'tasktemplates_id'         => $tasktemplates_id,
+                'tasktemplates_name'       => $tasktemplates_id > 0 ? TaskTemplate::getFriendlyNameById($tasktemplates_id) : '',
+                'solve_ticket'             => Fields::int($node->fields, 'solve_ticket') > 0,
+            ],
         ];
     }
 

@@ -58,6 +58,19 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 final class DiagramEditController extends AbstractController
 {
+    /** Fields of the side panel; the others (version, position) have their own endpoints. */
+    private const STEP_FIELDS = [
+        'name',
+        'node_type',
+        'actor_type',
+        'users_id',
+        'groups_id',
+        'manager_level',
+        'missing_manager_behavior',
+        'tasktemplates_id',
+        'solve_ticket',
+    ];
+
     #[Route(
         path: '/WorkflowVersion/{id}/Node',
         name: 'workflowversion_add_node',
@@ -85,7 +98,7 @@ final class DiagramEditController extends AbstractController
             'position_y'    => Fields::int($body, 'y'),
         ]));
 
-        return $this->answer($added, $added->result !== false, fn(): array => ['node' => $this->builder()->node($node)]);
+        return $this->answer($added, $added->result !== false, fn(): array => ['node' => $this->builder()->node($node, editable: true)]);
     }
 
     /**
@@ -156,6 +169,45 @@ final class DiagramEditController extends AbstractController
         ]));
 
         return $this->answer($added, $added->result !== false, fn(): array => ['edge' => $this->builder()->edge($transition->fields)]);
+    }
+
+    /**
+     * Saves the side panel of a step (spec 002, AC-4): the same rules as the
+     * step form, through Node.
+     */
+    #[Route(
+        path: '/Node/{id}',
+        name: 'node_update',
+        requirements: ['id' => '\d+'],
+        methods: ['POST'],
+    )]
+    public function updateNode(int $id, Request $request): JsonResponse
+    {
+        $node = new Node();
+        if (!$node->getFromDB($id)) {
+            throw new NotFoundHttpException();
+        }
+
+        $version = $this->loadDraft(Fields::int($node->fields, Node::$items_id));
+        if ($version instanceof JsonResponse) {
+            return $version;
+        }
+
+        $body  = $this->body($request);
+        $input = ['id' => $id];
+        foreach (self::STEP_FIELDS as $field) {
+            if (array_key_exists($field, $body) && is_scalar($body[$field])) {
+                $input[$field] = $body[$field];
+            }
+        }
+
+        $saved = SessionMessages::collect(static fn(): bool => $node->update($input));
+
+        return $this->answer($saved, $saved->result, function () use ($id): array {
+            $node = new Node();
+
+            return ['node' => $node->getFromDB($id) ? $this->builder()->node($node, editable: true) : null];
+        });
     }
 
     /**

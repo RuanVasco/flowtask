@@ -67,7 +67,10 @@ final class GraphController extends AbstractController
             throw new AccessDeniedHttpException();
         }
 
-        return new JsonResponse($this->builder()->build($version));
+        // The editor's data only goes to who may edit the draft.
+        $editable = $version->isDraft() && $workflow->can($workflow->getID(), UPDATE);
+
+        return new JsonResponse($this->builder()->build($version, editable: $editable));
     }
 
     /**
