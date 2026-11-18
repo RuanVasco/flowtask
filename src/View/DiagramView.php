@@ -48,9 +48,25 @@ final class DiagramView
 
     private const BUNDLE_URL = '/plugins/flowtask/lib/diagram/diagram.js';
 
-    public static function display(string $graph_url): void
+    /** Heights in pixels: the editor needs room for the palette and to drop steps. */
+    private const VIEWER_HEIGHT = 420;
+
+    private const EDITOR_HEIGHT = 600;
+
+    /**
+     * @param int|null $editable_version Draft the user edits on the diagram,
+     *                                   or null for the viewer
+     */
+    public static function display(string $graph_url, ?int $editable_version = null): void
     {
-        TemplateRenderer::getInstance()->display('@flowtask/diagram.html.twig', self::context($graph_url, true));
+        $context = self::context($graph_url, true);
+        if ($editable_version !== null) {
+            $context['config']['mode'] = 'editor';
+            $context['config']['urls'] = self::getEditURLs($editable_version);
+            $context['height']         = self::EDITOR_HEIGHT;
+        }
+
+        TemplateRenderer::getInstance()->display('@flowtask/diagram.html.twig', $context);
     }
 
     /**
@@ -59,7 +75,7 @@ final class DiagramView
      * @param bool $build_hint Tell the user to build the bundle when it is
      *                         missing (administrators), or show nothing
      *
-     * @return array{bundle_url: string|null, stylesheet_url: string|null, build_hint: bool, config: array<string, mixed>}
+     * @return array{bundle_url: string|null, stylesheet_url: string|null, build_hint: bool, height: int, config: array<string, mixed>}
      */
     public static function context(string $graph_url, bool $build_hint = false): array
     {
@@ -69,9 +85,15 @@ final class DiagramView
             'bundle_url'     => $bundle_url,
             'stylesheet_url' => $bundle_url !== null ? str_replace('/diagram.js?', '/diagram.css?', $bundle_url) : null,
             'build_hint'     => $build_hint,
+            'height'         => self::VIEWER_HEIGHT,
             'config'         => [
+                'mode'      => 'viewer',
                 'graph_url' => $graph_url,
                 'strings'   => self::getStrings(),
+                'icons'     => array_combine(
+                    array_map(static fn(NodeType $type): string => $type->value, NodeType::cases()),
+                    array_map(static fn(NodeType $type): string => $type->icon(), NodeType::cases()),
+                ),
             ],
         ];
     }
@@ -79,6 +101,25 @@ final class DiagramView
     public static function getVersionGraphURL(int $versions_id): string
     {
         return self::getRootDoc() . '/plugins/flowtask/WorkflowVersion/' . $versions_id . '/Graph';
+    }
+
+    /**
+     * Endpoints of DiagramEditController; `{id}` stands for the step or
+     * transition to delete.
+     *
+     * @return array<string, string>
+     */
+    private static function getEditURLs(int $versions_id): array
+    {
+        $base = self::getRootDoc() . '/plugins/flowtask/';
+
+        return [
+            'add_node'          => $base . 'WorkflowVersion/' . $versions_id . '/Node',
+            'positions'         => $base . 'WorkflowVersion/' . $versions_id . '/Positions',
+            'add_transition'    => $base . 'WorkflowVersion/' . $versions_id . '/Transition',
+            'delete_node'       => $base . 'Node/{id}/Delete',
+            'delete_transition' => $base . 'Transition/{id}/Delete',
+        ];
     }
 
     public static function getInstanceGraphURL(int $instances_id): string
@@ -126,6 +167,10 @@ final class DiagramView
             'states'     => $states,
             'loading'    => __('Loading...'),
             'load_error' => __('The diagram could not be loaded.', 'flowtask'),
+            'save_error' => __('The change could not be saved.', 'flowtask'),
+            'palette'    => __('Drag a step onto the diagram', 'flowtask'),
+            'delete'     => __('Delete'),
+            'close'      => __('Close'),
         ];
     }
 

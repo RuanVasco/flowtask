@@ -41,7 +41,7 @@
     {% set diagram_id = 'flowtask-diagram-' ~ random() %}
     {# Loaded before the component, which needs the height to fit the view. #}
     <link rel="stylesheet" href="{{ stylesheet_url }}">
-    <div id="{{ diagram_id }}" class="flowtask-diagram card mb-3" style="height: 420px;" data-config="{{ config|json_encode }}"></div>
+    <div id="{{ diagram_id }}" class="flowtask-diagram card mb-3" style="height: {{ height }}px;" data-config="{{ config|json_encode }}"></div>
     <script>
         import('{{ bundle_url|e('js') }}').then((module) => module.mount(document.getElementById('{{ diagram_id }}')));
     </script>

@@ -1,4 +1,3 @@
-
 /**
  * -------------------------------------------------------------------------
  * Flowtask plugin for GLPI
@@ -27,23 +26,16 @@
  * -------------------------------------------------------------------------
  */
 
-import { Background, Controls, ReactFlow, type ColorMode } from '@xyflow/react';
-import { useEffect, useMemo, useState } from 'react';
-import { FlowEdge } from './FlowEdge';
+import { Background, Controls, ReactFlow } from '@xyflow/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { canvasProps, colorMode } from './canvas';
+import { Editor } from './Editor';
 import { withPositions } from './layout';
 import { toFlowEdges, toFlowNodes } from './mapping';
-import { StepNode } from './StepNode';
-import type { DiagramConfig, Graph } from './types';
+import type { DiagramConfig, Graph, Strings } from './types';
 
-const nodeTypes = { step: StepNode };
-const edgeTypes = { flow: FlowEdge };
-
-/** Follows the GLPI theme of the page (light or dark). */
-function colorMode(): ColorMode {
-    return document.documentElement.dataset.glpiThemeDark === '1' ? 'dark' : 'light';
-}
-
-type LoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'; graph: Graph };
+/** `generation` counts the graphs loaded, so the editor restarts from each new one. */
+type LoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'; graph: Graph; generation: number };
 
 async function fetchGraph(url: string): Promise<Graph> {
     const response = await fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
@@ -55,27 +47,32 @@ async function fetchGraph(url: string): Promise<Graph> {
 }
 
 /**
- * Read only diagram of a version (spec 002, viewer). Saved positions are
- * used as they are; a version without any is laid out, and that layout is
- * not saved.
+ * Loads the graph of the version and shows it in the viewer or the editor
+ * (spec 002).
  */
 export function Diagram({ config }: { config: DiagramConfig }) {
     const [state, setState] = useState<LoadState>({ status: 'loading' });
+    const [loads, setLoads] = useState(0);
+    const reload = useCallback(() => setLoads((count) => count + 1), []);
 
     useEffect(() => {
         let cancelled = false;
         fetchGraph(config.graph_url)
-            .then((graph) => !cancelled && setState({ status: 'ready', graph: withPositions(graph) }))
+            .then(
+                (graph) =>
+                    !cancelled &&
+                    setState((previous) => ({
+                        status: 'ready',
+                        graph,
+                        generation: previous.status === 'ready' ? previous.generation + 1 : 0,
+                    })),
+            )
             .catch(() => !cancelled && setState({ status: 'error' }));
 
         return () => {
             cancelled = true;
         };
-    }, [config.graph_url]);
-
-    const graph = state.status === 'ready' ? state.graph : null;
-    const nodes = useMemo(() => (graph ? toFlowNodes(graph, config.strings) : []), [graph, config.strings]);
-    const edges = useMemo(() => (graph ? toFlowEdges(graph, config.strings) : []), [graph, config.strings]);
+    }, [config.graph_url, loads]);
 
     if (state.status !== 'ready') {
         return (
@@ -85,22 +82,34 @@ export function Diagram({ config }: { config: DiagramConfig }) {
         );
     }
 
+    return config.mode === 'editor' ? (
+        <Editor key={state.generation} config={config} graph={state.graph} reload={reload} />
+    ) : (
+        <Viewer graph={state.graph} strings={config.strings} />
+    );
+}
+
+/**
+ * Read only diagram (spec 002, viewer). A version without saved positions
+ * is laid out, and that layout is not saved.
+ */
+function Viewer({ graph, strings }: { graph: Graph; strings: Strings }) {
+    const placed = useMemo(() => withPositions(graph), [graph]);
+    const nodes = useMemo(() => toFlowNodes(placed, strings), [placed, strings]);
+    const edges = useMemo(() => toFlowEdges(placed, strings), [placed, strings]);
+
     return (
         <ReactFlow
+            {...canvasProps}
             className="ft-diagram--viewer"
+            colorMode={colorMode()}
             nodes={nodes}
             edges={edges}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            colorMode={colorMode()}
             nodesDraggable={false}
             nodesConnectable={false}
             elementsSelectable={false}
             edgesFocusable={false}
             nodesFocusable={false}
-            fitView
-            fitViewOptions={{ padding: 0.15, maxZoom: 1.25 }}
-            minZoom={0.2}
         >
             <Background gap={16} />
             <Controls showInteractive={false} />

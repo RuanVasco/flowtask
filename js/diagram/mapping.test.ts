@@ -28,7 +28,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { toFlowEdges, toFlowNodes } from './mapping';
+import { conditionFor, toFlowEdges, toFlowNodes } from './mapping';
 import type { Graph, GraphNode, NodeType, Strings } from './types';
 
 function node(id: number, type: NodeType): GraphNode {
@@ -41,6 +41,10 @@ const strings: Strings = {
     states: { active: 'In progress', done: 'Done', skipped: 'Skipped', cancelled: 'Cancelled' },
     loading: 'Loading',
     load_error: 'Error',
+    save_error: 'Not saved',
+    palette: 'Palette',
+    delete: 'Delete',
+    close: 'Close',
 };
 
 const graph: Graph = {
@@ -74,5 +78,26 @@ describe('graph mapping', () => {
 
     it('marks the transitions the instance followed (spec 002, AC-8)', () => {
         expect(toFlowEdges(graph, strings).map((e) => e.className?.includes('ft-edge--taken'))).toEqual([true, false, false]);
+    });
+
+    it('keeps the start step on the diagram (spec 002, AC-5)', () => {
+        expect(toFlowNodes(graph, strings).map((n) => n.deletable)).toEqual([false, true, true, true]);
+    });
+});
+
+describe('condition of a drawn transition (spec 002, AC-3)', () => {
+    it('follows the source type when only one condition fits', () => {
+        expect(conditionFor('start', null)).toBe('always');
+        expect(conditionFor('task', null)).toBe('completed');
+    });
+
+    it('follows the handle of an approval', () => {
+        expect(conditionFor('approval', 'approved')).toBe('approved');
+        expect(conditionFor('approval', 'rejected')).toBe('rejected');
+        expect(conditionFor('approval', null)).toBeNull();
+    });
+
+    it('has none out of an end step', () => {
+        expect(conditionFor('end', null)).toBeNull();
     });
 });

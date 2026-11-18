@@ -71,9 +71,30 @@ export interface Strings {
     states: Record<StepState, string>;
     loading: string;
     load_error: string;
+    save_error: string;
+    palette: string;
+    delete: string;
+    close: string;
 }
 
-export interface DiagramConfig {
+/** Endpoints of the editor; `{id}` stands for the item to delete. */
+export interface EditUrls {
+    add_node: string;
+    positions: string;
+    add_transition: string;
+    delete_node: string;
+    delete_transition: string;
+}
+
+interface BaseConfig {
     graph_url: string;
     strings: Strings;
+    /** Tabler icon of each step type. */
+    icons: Record<NodeType, string>;
 }
+
+export type ViewerConfig = BaseConfig & { mode: 'viewer' };
+
+export type EditorConfig = BaseConfig & { mode: 'editor'; urls: EditUrls };
+
+export type DiagramConfig = ViewerConfig | EditorConfig;

@@ -32,6 +32,13 @@ import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps } from '
 /** Clearance below the steps for an edge that goes back to an earlier step. */
 const LOOP_DROP = 64;
 const LOOP_OFFSET = 24;
+/** A target this far above or below is reached by a plain step path. */
+const LOOP_MAX_RISE = 120;
+
+/** The edge goes back to a step on about the same row, so it would cross the steps between. */
+export function isLoopBack(sx: number, sy: number, tx: number, ty: number): boolean {
+    return tx < sx - LOOP_OFFSET && Math.abs(ty - sy) < LOOP_MAX_RISE;
+}
 
 /**
  * Path of an edge whose target sits left of its source (a loop back, e.g.
@@ -52,7 +59,7 @@ export function FlowEdge(props: EdgeProps) {
     const condition = typeof data?.condition === 'string' ? data.condition : '';
 
     const [path, labelX, labelY] =
-        targetX < sourceX
+        isLoopBack(sourceX, sourceY, targetX, targetY)
             ? loopBackPath(sourceX, sourceY, targetX, targetY)
             : getSmoothStepPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, borderRadius: 8 });
 

@@ -59,7 +59,6 @@
     --xy-attribution-background-color: transparent;
 
     position: relative;
-    height: 420px;
     overflow: hidden;
     color: var(--ft-text);
 }
@@ -236,6 +235,67 @@
 
 .ft-diagram--viewer .react-flow__handle {
     opacity: 0;
+}
+
+/* Editor (spec 002, editor actions). */
+.ft-diagram--editor .react-flow__handle {
+    width: 10px;
+    height: 10px;
+}
+
+.react-flow__node.selected .ft-node--box,
+.react-flow__node.selected .ft-node__circle {
+    outline: 2px solid var(--ft-primary);
+    outline-offset: 2px;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+    stroke: var(--ft-primary);
+    stroke-width: 2.5;
+}
+
+.ft-palette {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    background: var(--ft-surface);
+    border: 1px solid var(--ft-border);
+    border-radius: 8px;
+}
+
+.ft-palette__title {
+    color: var(--ft-muted);
+    font-size: 0.75rem;
+}
+
+.ft-palette__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border: 1px solid var(--ft-border);
+    border-left: 4px solid var(--ft-task);
+    border-radius: 6px;
+    background: var(--ft-surface);
+    cursor: grab;
+    user-select: none;
+}
+
+.ft-palette__item--approval {
+    border-left-color: var(--ft-approval);
+}
+
+.ft-palette__item--end {
+    border-left-color: var(--ft-danger);
+}
+
+.ft-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    max-width: 480px;
+    margin: 0;
 }
 
 .ft-edge-label {
