@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-18 12:05+0000\n"
+"POT-Creation-Date: 2026-11-18 13:12+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,8 +18,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
+#: templates/diagram.html.twig
+msgid "The diagram is not built. Run npm install in the plugin directory."
+msgstr ""
+
 #: templates/publish_button.html.twig
-#: templates/workflow_current_version.html.twig
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:286
 msgid "Publish"
 msgstr ""
 
@@ -28,7 +32,8 @@ msgid "Checks the graph, then makes this version the one new tickets start on."
 msgstr ""
 
 #: templates/ticket_workflow.html.twig
-#: templates/workflow_current_version.html.twig src/WorkflowVersion.php:77
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:84
+#: src/WorkflowVersion.php:77
 #, php-format
 msgid "Version %d"
 msgstr ""
@@ -59,14 +64,14 @@ msgstr ""
 msgid "The workflow is stuck."
 msgstr ""
 
-#: templates/ticket_workflow.html.twig src/Node.php:62
+#: templates/ticket_workflow.html.twig src/Node.php:65
 msgid "Step"
 msgid_plural "Steps"
 msgstr[0] ""
 msgstr[1] ""
 
 #: templates/ticket_workflow.html.twig templates/node.html.twig
-#: src/Node.php:143
+#: src/View/DiagramView.php:294 src/Node.php:146
 msgid "Actor"
 msgstr ""
 
@@ -126,19 +131,19 @@ msgid "Published on %1$s by %2$s."
 msgstr ""
 
 #: templates/workflow_current_version.html.twig
-#: templates/category_workflow.html.twig
+#: templates/category_workflow.html.twig src/Diagram.php:67
 msgid "This workflow has no version yet."
 msgstr ""
 
-#: templates/workflow_current_version.html.twig
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:101
 msgid "Discard this draft and its changes?"
 msgstr ""
 
-#: templates/workflow_current_version.html.twig
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:287
 msgid "Discard draft"
 msgstr ""
 
-#: templates/workflow_current_version.html.twig
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:285
 msgid "Edit"
 msgstr ""
 
@@ -152,11 +157,11 @@ msgstr[1] ""
 msgid "Version number"
 msgstr ""
 
-#: templates/workflowversion.html.twig src/WorkflowVersion.php:165
+#: templates/workflowversion.html.twig src/WorkflowVersion.php:166
 msgid "Published by"
 msgstr ""
 
-#: templates/workflowversion.html.twig src/WorkflowVersion.php:166
+#: templates/workflowversion.html.twig src/WorkflowVersion.php:167
 msgid "Publication date"
 msgstr ""
 
@@ -169,21 +174,21 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
-#: templates/node.html.twig
+#: templates/node.html.twig src/View/DiagramView.php:297
 msgid "Manager level"
 msgstr ""
 
-#: templates/node.html.twig
+#: templates/node.html.twig src/View/DiagramView.php:298
 msgid ""
 "1 is the requester supervisor, 2 the supervisor of that supervisor, and so "
 "on."
 msgstr ""
 
-#: templates/node.html.twig
+#: templates/node.html.twig src/View/DiagramView.php:299
 msgid "When the manager is missing"
 msgstr ""
 
-#: templates/node.html.twig
+#: templates/node.html.twig src/View/DiagramView.php:301
 msgid "Solve the ticket"
 msgstr ""
 
@@ -236,43 +241,76 @@ msgstr ""
 msgid "This category is already linked to a workflow."
 msgstr ""
 
-#: src/Workflow.php:241
+#: src/Workflow.php:242
 msgid ""
 "This workflow has instances and cannot be purged. Deactivate it instead."
 msgstr ""
 
-#: src/Controller/PublishVersionController.php:77
+#: src/Controller/DiagramEditController.php:235
+msgid "The start step cannot be deleted."
+msgstr ""
+
+#: src/Controller/DiagramEditController.php:284 src/Transition.php:241
+#: src/Node.php:384
+msgid "Steps and transitions can only be changed in a draft version."
+msgstr ""
+
+#: src/Controller/DiagramEditController.php:313 src/View/DiagramView.php:280
+msgid "The change could not be saved."
+msgstr ""
+
+#: src/Controller/PublishVersionController.php:91
 msgid "The version has been published."
 msgstr ""
 
-#: src/Controller/PublishVersionController.php:80
+#: src/Controller/PublishVersionController.php:94 src/View/DiagramView.php:288
 msgid "The version cannot be published:"
 msgstr ""
 
-#: src/Controller/InstanceActionController.php:69
+#: src/Controller/InstanceActionController.php:74
 msgid "The workflow has been resumed."
 msgstr ""
 
-#: src/Controller/InstanceActionController.php:71
+#: src/Controller/InstanceActionController.php:75
 msgid "The workflow has been completed."
 msgstr ""
 
-#: src/Controller/InstanceActionController.php:92
+#: src/Controller/InstanceActionController.php:99
 msgid "The workflow has been cancelled."
 msgstr ""
 
-#: src/Controller/InstanceActionController.php:117
+#: src/Controller/InstanceActionController.php:124
 msgid "This action no longer applies to the workflow of this ticket."
 msgstr ""
 
-#: src/Instance.php:62
+#: src/Instance.php:63
 msgid "Workflow instance"
 msgid_plural "Workflow instances"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Instance.php:166
+#: src/Instance.php:169
 msgid "Flag workflow instances whose task or approval was removed"
+msgstr ""
+
+#: src/View/DiagramView.php:279
+msgid "The diagram could not be loaded."
+msgstr ""
+
+#: src/View/DiagramView.php:281
+msgid "Drag a step onto the diagram"
+msgstr ""
+
+#: src/View/DiagramView.php:290
+msgid "Select a step to configure it."
+msgstr ""
+
+#: src/View/DiagramView.php:291
+msgid "The start step has nothing to configure."
+msgstr ""
+
+#: src/View/DiagramView.php:305
+msgid "This step cannot be published yet:"
 msgstr ""
 
 #: src/View/InstanceTimeline.php:160
@@ -372,6 +410,10 @@ msgctxt "workflow status"
 msgid "Cancelled"
 msgstr ""
 
+#: src/Diagram.php:46
+msgid "Diagram"
+msgstr ""
+
 #: src/Engine/WorkflowEngine.php:203
 #, php-format
 msgid "The task or approval of the step \"%s\" was removed."
@@ -466,10 +508,6 @@ msgstr ""
 msgid "Add a transition"
 msgstr ""
 
-#: src/Transition.php:241 src/Node.php:354
-msgid "Steps and transitions can only be changed in a draft version."
-msgstr ""
-
 #: src/Transition.php:252
 msgid "A transition must join two steps of its version."
 msgstr ""
@@ -496,40 +534,45 @@ msgstr ""
 msgid "Step \"%1$s\" already has a \"%2$s\" transition."
 msgstr ""
 
-#: src/Node.php:87
+#: src/Http/VersionItemForm.php:104
+#, php-format
+msgid "This step cannot be published yet: %s"
+msgstr ""
+
+#: src/Node.php:90
 #, php-format
 msgid "%1$s (level %2$d)"
 msgstr ""
 
-#: src/Node.php:139
+#: src/Node.php:142
 msgid "Add a step"
 msgstr ""
 
-#: src/Node.php:227
+#: src/Node.php:230
 msgid "The start step is created with the draft and cannot be added."
 msgstr ""
 
-#: src/Node.php:252
+#: src/Node.php:259
 msgid "The start step cannot be edited."
 msgstr ""
 
-#: src/Node.php:283
+#: src/Node.php:290
 msgid "Transitions this step can no longer fire were removed."
 msgstr ""
 
-#: src/WorkflowVersion.php:118
+#: src/WorkflowVersion.php:119
 msgid "Version history"
 msgstr ""
 
-#: src/WorkflowVersion.php:259
+#: src/WorkflowVersion.php:260
 msgid "This workflow already has a draft version."
 msgstr ""
 
-#: src/WorkflowVersion.php:290
+#: src/WorkflowVersion.php:291
 msgid "A published version cannot be modified. Create a draft instead."
 msgstr ""
 
-#: src/WorkflowVersion.php:329
+#: src/WorkflowVersion.php:330
 msgid "This version has instances and cannot be purged."
 msgstr ""
 
@@ -541,53 +584,53 @@ msgstr ""
 msgid "The version could not be published."
 msgstr ""
 
-#: src/Definition/GraphValidator.php:89
+#: src/Definition/GraphValidator.php:112
 msgid "The version must have exactly one start step."
 msgstr ""
 
-#: src/Definition/GraphValidator.php:97
+#: src/Definition/GraphValidator.php:120
 msgid "The version needs at least one end step."
 msgstr ""
 
-#: src/Definition/GraphValidator.php:125
+#: src/Definition/GraphValidator.php:148
 #, php-format
 msgid "Step \"%1$s\": %2$s"
 msgstr ""
 
-#: src/Definition/GraphValidator.php:136
+#: src/Definition/GraphValidator.php:159
 #, php-format
 msgid "Step \"%1$s\" has no \"%2$s\" transition."
 msgstr ""
 
-#: src/Definition/GraphValidator.php:149
+#: src/Definition/GraphValidator.php:171
 #, php-format
 msgid "Step \"%s\" cannot be reached from the start step."
 msgstr ""
 
-#: src/Definition/GraphValidator.php:165
+#: src/Definition/GraphValidator.php:187
 msgid "A transition points at a step that is not in this version."
 msgstr ""
 
-#: src/Definition/GraphValidator.php:173
+#: src/Definition/GraphValidator.php:195
 #, php-format
 msgid "Step \"%s\" has a transition into the start step."
 msgstr ""
 
-#: src/Definition/GraphValidator.php:178
+#: src/Definition/GraphValidator.php:200
 #, php-format
 msgid "Step \"%1$s\" cannot fire its \"%2$s\" transition."
 msgstr ""
 
-#: src/Definition/StepConfiguration.php:93
-msgid "The step type is invalid."
-msgstr ""
-
-#: src/Definition/StepConfiguration.php:102
+#: src/Definition/StepConfiguration.php:104
 msgid "The step needs an actor."
 msgstr ""
 
-#: src/Definition/StepConfiguration.php:107
+#: src/Definition/StepConfiguration.php:109
 msgid "A task step needs a task template."
+msgstr ""
+
+#: src/Definition/StepConfiguration.php:124
+msgid "The step type is invalid."
 msgstr ""
 
 #: src/InstanceStep.php:48
