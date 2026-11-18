@@ -45,7 +45,6 @@ use GlpiPlugin\Flowtask\Instance;
 use GlpiPlugin\Flowtask\InstanceStep;
 use GlpiPlugin\Flowtask\Node;
 use GlpiPlugin\Flowtask\Workflow;
-use GlpiPlugin\Flowtask\Workflow_ITILCategory;
 use GlpiPlugin\Flowtask\WorkflowVersion;
 use Group;
 use ITILCategory;
@@ -62,7 +61,7 @@ use User;
  */
 final class EngineTest extends DbTestCase
 {
-    use WorkflowFixtures;
+    use InstanceFixtures;
 
     public function testTicketInLinkedCategoryStartsOnPublishedVersionAndCreatesTask(): void
     {
@@ -435,21 +434,6 @@ final class EngineTest extends DbTestCase
     }
 
     /**
-     * START, TASK, END.
-     *
-     * @return array{ITILCategory, WorkflowVersion, Workflow}
-     */
-    private function publishLinear(bool $solve = false, int $users_id = 0): array
-    {
-        return $this->publishGraph(function (WorkflowVersion $draft, Node $start) use ($solve, $users_id): void {
-            $task = $this->createNode($draft, NodeType::TASK, $users_id > 0 ? ['users_id' => $users_id] : []);
-            $end  = $this->createNode($draft, NodeType::END, ['solve_ticket' => $solve ? 1 : 0]);
-            $this->createTransition($start, $task, TransitionCondition::ALWAYS);
-            $this->createTransition($task, $end, TransitionCondition::COMPLETED);
-        });
-    }
-
-    /**
      * START, APPROVAL; approved goes to END, rejected to a rework TASK then END.
      *
      * @return array{ITILCategory, WorkflowVersion, Workflow}
@@ -484,63 +468,6 @@ final class EngineTest extends DbTestCase
             $this->createTransition($start, $task, TransitionCondition::ALWAYS);
             $this->createTransition($task, $end, TransitionCondition::COMPLETED);
         });
-    }
-
-    /**
-     * @param callable(WorkflowVersion, Node): void $build
-     *
-     * @return array{ITILCategory, WorkflowVersion, Workflow}
-     */
-    private function publishGraph(callable $build): array
-    {
-        $workflow = $this->createActiveWorkflow();
-        $draft    = $this->createDraft($workflow);
-        $build($draft, $this->getStartNode($draft));
-        $this->assertSame([], $this->publish($draft));
-
-        return [$this->linkCategory($workflow), $this->reloadItem($draft), $workflow];
-    }
-
-    private function createActiveWorkflow(): Workflow
-    {
-        return $this->createItem(Workflow::class, [
-            'name'         => $this->getUniqueString(),
-            'entities_id'  => $this->getTestRootEntity(true),
-            'is_recursive' => 1,
-            'is_active'    => 1,
-        ]);
-    }
-
-    private function linkCategory(Workflow $workflow): ITILCategory
-    {
-        $category = $this->createItem(ITILCategory::class, ['name' => $this->getUniqueString()]);
-        $this->createItem(Workflow_ITILCategory::class, [
-            'plugin_flowtask_workflows_id' => $workflow->getID(),
-            'itilcategories_id'            => $category->getID(),
-        ]);
-
-        return $category;
-    }
-
-    private function createTicket(?ITILCategory $category, int $requester = 0): Ticket
-    {
-        return $this->createItem(Ticket::class, [
-            'name'              => $this->getUniqueString(),
-            'content'           => 'Content',
-            'entities_id'       => $this->getTestRootEntity(true),
-            'itilcategories_id' => $category?->getID() ?? 0,
-            '_actors'           => [
-                'requester' => [['itemtype' => User::class, 'items_id' => $requester > 0 ? $requester : Session::getLoginUserID()]],
-            ],
-        ]);
-    }
-
-    private function getInstance(Ticket $ticket): Instance
-    {
-        $instance = Instance::getForTicket($ticket->getID());
-        $this->assertInstanceOf(Instance::class, $instance);
-
-        return $instance;
     }
 
     private function getActiveTask(Instance $instance): TicketTask
@@ -605,13 +532,5 @@ final class EngineTest extends DbTestCase
     private function assertStuckMessage(string $reason): void
     {
         $this->hasSessionMessages(WARNING, [htmlescape('The workflow of this ticket is stuck: ' . $reason)]);
-    }
-
-    private function engine(): WorkflowEngine
-    {
-        /** @var DBmysql $DB */
-        global $DB;
-
-        return WorkflowEngine::fromDb($DB);
     }
 }
