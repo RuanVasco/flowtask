@@ -31,11 +31,15 @@
 namespace GlpiPlugin\Flowtask;
 
 use CommonDBChild;
+use CommonGLPI;
 use CronTask;
 use DBmysql;
+use Glpi\Application\View\TemplateRenderer;
 use GlpiPlugin\Flowtask\Engine\WorkflowEngine;
 use GlpiPlugin\Flowtask\Enum\InstanceStatus;
 use GlpiPlugin\Flowtask\Support\Fields;
+use GlpiPlugin\Flowtask\View\InstanceTimeline;
+use Session;
 use Ticket;
 
 /**
@@ -49,6 +53,10 @@ class Instance extends CommonDBChild
 
     public const CRON_CHECK = 'checkInstances';
 
+    public const ACTION_RETRY = 'Retry';
+
+    public const ACTION_CANCEL = 'Cancel';
+
     public static function getTypeName($nb = 0)
     {
         return _n('Workflow instance', 'Workflow instances', $nb, 'flowtask');
@@ -59,6 +67,68 @@ class Instance extends CommonDBChild
         $instance = new self();
 
         return $instance->getFromDBByCrit([self::$items_id => $tickets_id]) ? $instance : null;
+    }
+
+    /**
+     * "Workflow" tab, on tickets that have an instance (spec 001, ticket tab rules).
+     */
+    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
+    {
+        if (!$item instanceof Ticket || $item->isNewItem() || countElementsInTable(self::getTable(), [self::$items_id => $item->getID()]) === 0) {
+            return '';
+        }
+
+        return self::createTabEntry(Workflow::getTypeName(1), 0, $item::class, Workflow::getIcon());
+    }
+
+    public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0)
+    {
+        /** @var DBmysql $DB */
+        global $DB;
+
+        if (!$item instanceof Ticket) {
+            return false;
+        }
+
+        $instance = self::getForTicket($item->getID());
+        if ($instance instanceof self) {
+            TemplateRenderer::getInstance()->display(
+                '@flowtask/ticket_workflow.html.twig',
+                (new InstanceTimeline($DB))->build($instance, $item),
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Retrying only enters the current step again, so updating the ticket is
+     * enough. Ticket::canUpdate() keeps out requesters, whom canUpdateItem()
+     * lets edit a ticket nobody has worked on yet.
+     */
+    public static function canRetryOn(Ticket $ticket): bool
+    {
+        return Ticket::canUpdate() && $ticket->canUpdateItem();
+    }
+
+    /**
+     * Cancelling skips the remaining steps, approvals included, so it takes
+     * the update right on workflows.
+     */
+    public static function canCancelOn(Ticket $ticket): bool
+    {
+        return $ticket->canViewItem() && Session::haveRight(Workflow::$rightname, UPDATE);
+    }
+
+    /**
+     * @param self::ACTION_* $action
+     */
+    public static function getActionURL(int $id, string $action): string
+    {
+        /** @var array{root_doc: string} $CFG_GLPI */
+        global $CFG_GLPI;
+
+        return $CFG_GLPI['root_doc'] . '/plugins/flowtask/Instance/' . $id . '/' . $action;
     }
 
     public function getStatus(): ?InstanceStatus

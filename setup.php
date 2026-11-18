@@ -31,6 +31,7 @@
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\Flowtask\Engine\DeletionGuard;
 use GlpiPlugin\Flowtask\Engine\TicketEvents;
+use GlpiPlugin\Flowtask\Instance;
 use GlpiPlugin\Flowtask\ProfileRights;
 use GlpiPlugin\Flowtask\Workflow;
 use GlpiPlugin\Flowtask\Workflow_ITILCategory;
@@ -61,6 +62,7 @@ function plugin_init_flowtask(): void
 
     Plugin::registerClass(ProfileRights::class, ['addtabon' => [Profile::class]]);
     Plugin::registerClass(Workflow_ITILCategory::class, ['addtabon' => [ITILCategory::class]]);
+    Plugin::registerClass(Instance::class, ['addtabon' => [Ticket::class]]);
 
     // getMenuContent() hides the entry from profiles without the right.
     $PLUGIN_HOOKS[Hooks::MENU_TOADD]['flowtask'] = ['config' => Workflow::class];

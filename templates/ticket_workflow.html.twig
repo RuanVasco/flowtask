@@ -1,0 +1,125 @@
+{#
+ # -------------------------------------------------------------------------
+ # Flowtask plugin for GLPI
+ # -------------------------------------------------------------------------
+ #
+ # LICENSE
+ #
+ # This file is part of Flowtask.
+ #
+ # Flowtask is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation, either version 3 of the License, or
+ # (at your option) any later version.
+ #
+ # Flowtask is distributed in the hope that it will be useful,
+ # but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ # GNU General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with Flowtask. If not, see <https://www.gnu.org/licenses/>.
+ # -------------------------------------------------------------------------
+ # @copyright Copyright (C) 2026 by Ruan Vasconcelos.
+ # @license   GPLv3+ https://www.gnu.org/licenses/gpl-3.0.html
+ # @link      https://github.com/RuanVasco/flowtask
+ # -------------------------------------------------------------------------
+ #}
+
+{#
+ # "Workflow" tab of a ticket: the instance and its timeline (spec 001,
+ # ticket tab rules, AC-9).
+ #}
+<div class="card mb-3">
+    <div class="card-body d-flex flex-wrap align-items-center gap-3">
+        <i class="{{ workflow_icon }} fs-1"></i>
+        <div class="flex-grow-1">
+            <div class="fw-bold">
+                {% if workflow_url is not null %}
+                    <a href="{{ workflow_url }}">{{ workflow_name }}</a>
+                {% else %}
+                    {{ workflow_name }}
+                {% endif %}
+                <span class="badge {{ status_badge }} ms-1">{{ status_label }}</span>
+            </div>
+            <div class="text-secondary small">
+                {{ __('Version %d', 'flowtask')|format(version_number) }}
+                &middot;
+                {{ __('Started on %s', 'flowtask')|format(date_start|formatted_datetime) }}
+                {% if date_end is not empty %}
+                    &middot;
+                    {{ __('Ended on %s', 'flowtask')|format(date_end|formatted_datetime) }}
+                {% endif %}
+            </div>
+        </div>
+
+        {% if can_retry %}
+            <form method="post" action="{{ retry_url }}">
+                <button type="submit" name="retry" value="1" class="btn btn-primary">
+                    <i class="ti ti-refresh"></i>
+                    <span>{{ __('Retry', 'flowtask') }}</span>
+                </button>
+            </form>
+        {% endif %}
+        {% if can_cancel %}
+            <form method="post" action="{{ cancel_url }}">
+                <button type="submit" name="cancel" value="1" class="btn btn-outline-danger"
+                        onclick="return confirm('{{ __('Cancel this workflow? Its remaining steps will not run.', 'flowtask')|e('js') }}');">
+                    <i class="ti ti-player-stop"></i>
+                    <span>{{ __('Cancel workflow', 'flowtask') }}</span>
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    {% if stuck_reason is not empty %}
+        <div class="card-body pt-0">
+            <div class="alert alert-warning mb-0">
+                <div class="fw-bold">{{ __('The workflow is stuck.', 'flowtask') }}</div>
+                <div>{{ stuck_reason }}</div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>{{ __('Step', 'flowtask') }}</th>
+                    <th>{{ __('Status') }}</th>
+                    <th>{{ __('Actor', 'flowtask') }}</th>
+                    <th>{{ __('Task or approval', 'flowtask') }}</th>
+                    <th>{{ __('Start date') }}</th>
+                    <th>{{ __('End date') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for step in steps %}
+                    <tr class="{{ step.is_active ? 'table-active fw-bold' : '' }}">
+                        <td>
+                            <i class="{{ step.icon }} me-1" title="{{ step.type_label }}"></i>
+                            {{ step.name }}
+                            <div class="text-secondary small fw-normal">{{ step.type_label }}</div>
+                        </td>
+                        <td>
+                            <span class="badge {{ step.status_badge }}">{{ step.status_label }}</span>
+                            {% if step.outcome is not empty %}
+                                <div class="text-secondary small fw-normal">{{ step.outcome }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ step.actor }}</td>
+                        <td>{{ step.item }}</td>
+                        <td>{{ step.date_start|formatted_datetime }}</td>
+                        <td>{{ step.date_end is not empty ? step.date_end|formatted_datetime : '' }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-secondary">{{ __('No step has been entered yet.', 'flowtask') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
