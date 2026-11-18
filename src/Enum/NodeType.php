@@ -46,4 +46,17 @@ enum NodeType: string
             self::END      => __('End', 'flowtask'),
         };
     }
+
+    /**
+     * Tabler icon shown next to the step.
+     */
+    public function icon(): string
+    {
+        return match ($this) {
+            self::START    => 'ti ti-player-play',
+            self::TASK     => 'ti ti-checklist',
+            self::APPROVAL => 'ti ti-thumb-up',
+            self::END      => 'ti ti-flag',
+        };
+    }
 }

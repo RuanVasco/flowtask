@@ -37,4 +37,14 @@ enum StepStatus: string
     case SKIPPED = 'skipped';
     /** The instance was cancelled while the step was active. */
     case CANCELLED = 'cancelled';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::ACTIVE    => _x('step status', 'In progress', 'flowtask'),
+            self::DONE      => _x('step status', 'Done', 'flowtask'),
+            self::SKIPPED   => _x('step status', 'Skipped', 'flowtask'),
+            self::CANCELLED => _x('step status', 'Cancelled', 'flowtask'),
+        };
+    }
 }

@@ -37,6 +37,16 @@ enum InstanceStatus: string
     case STUCK = 'stuck';
     case CANCELLED = 'cancelled';
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::RUNNING   => _x('workflow status', 'Running', 'flowtask'),
+            self::COMPLETED => _x('workflow status', 'Completed', 'flowtask'),
+            self::STUCK     => _x('workflow status', 'Stuck', 'flowtask'),
+            self::CANCELLED => _x('workflow status', 'Cancelled', 'flowtask'),
+        };
+    }
+
     /**
      * Statuses of an instance that has not ended yet.
      *
