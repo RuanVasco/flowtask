@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flowtask\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-18 13:12+0000\n"
+"POT-Creation-Date: 2026-11-18 18:13+0000\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,7 +14,7 @@ msgid "The diagram is not built. Run npm install in the plugin directory."
 msgstr "O diagrama não foi gerado. Rode npm install na pasta do plugin."
 
 #: templates/publish_button.html.twig
-#: templates/workflow_current_version.html.twig src/View/DiagramView.php:286
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:287
 msgid "Publish"
 msgstr "Publicar"
 
@@ -56,14 +56,13 @@ msgstr "Cancelar workflow"
 msgid "The workflow is stuck."
 msgstr "O workflow está travado."
 
-#: templates/ticket_workflow.html.twig src/Node.php:65
+#: templates/ticket_workflow.html.twig src/Node.php:62
 msgid "Step"
 msgid_plural "Steps"
 msgstr[0] "Etapa"
 msgstr[1] "Etapas"
 
-#: templates/ticket_workflow.html.twig templates/node.html.twig
-#: src/View/DiagramView.php:294 src/Node.php:146
+#: templates/ticket_workflow.html.twig src/View/DiagramView.php:295
 msgid "Actor"
 msgstr "Responsável"
 
@@ -74,33 +73,6 @@ msgstr "Tarefa ou aprovação"
 #: templates/ticket_workflow.html.twig
 msgid "No step has been entered yet."
 msgstr "Nenhuma etapa foi iniciada ainda."
-
-#: templates/transition.html.twig templates/node.html.twig
-#: src/WorkflowVersion.php:67
-msgid "Workflow version"
-msgid_plural "Workflow versions"
-msgstr[0] "Versão do workflow"
-msgstr[1] "Versões do workflow"
-
-#: templates/transition.html.twig src/Transition.php:145
-msgid "From step"
-msgstr "Da etapa"
-
-#: templates/transition.html.twig src/Transition.php:146
-msgid "Condition"
-msgstr "Condição"
-
-#: templates/transition.html.twig
-msgid ""
-"Start steps fire \"Always\", task steps \"Completed\", approval steps "
-"\"Approved\" or \"Rejected\"."
-msgstr ""
-"Etapas de início disparam \"Sempre\", etapas de tarefa \"Concluída\", etapas "
-"de aprovação \"Aprovada\" ou \"Reprovada\"."
-
-#: templates/transition.html.twig src/Transition.php:147
-msgid "To step"
-msgstr "Para a etapa"
 
 #: templates/workflow_current_version.html.twig src/Enum/VersionStatus.php:45
 msgid "Draft"
@@ -135,11 +107,11 @@ msgstr "Este workflow ainda não tem versão."
 msgid "Discard this draft and its changes?"
 msgstr "Descartar este rascunho e suas alterações?"
 
-#: templates/workflow_current_version.html.twig src/View/DiagramView.php:287
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:288
 msgid "Discard draft"
 msgstr "Descartar rascunho"
 
-#: templates/workflow_current_version.html.twig src/View/DiagramView.php:285
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:286
 msgid "Edit"
 msgstr "Editar"
 
@@ -153,11 +125,11 @@ msgstr[1] "Workflows"
 msgid "Version number"
 msgstr "Número da versão"
 
-#: templates/workflowversion.html.twig src/WorkflowVersion.php:166
+#: templates/workflowversion.html.twig src/WorkflowVersion.php:164
 msgid "Published by"
 msgstr "Publicada por"
 
-#: templates/workflowversion.html.twig src/WorkflowVersion.php:167
+#: templates/workflowversion.html.twig src/WorkflowVersion.php:165
 msgid "Publication date"
 msgstr "Data de publicação"
 
@@ -166,30 +138,6 @@ msgid ""
 "Only a draft can be changed. Use \"Edit\" on the workflow to create one."
 msgstr ""
 "Só um rascunho pode ser alterado. Use \"Editar\" no workflow para criar um."
-
-#: templates/node.html.twig src/Enum/NodeType.php:43
-msgid "Start"
-msgstr "Início"
-
-#: templates/node.html.twig src/View/DiagramView.php:297
-msgid "Manager level"
-msgstr "Nível do gestor"
-
-#: templates/node.html.twig src/View/DiagramView.php:298
-msgid ""
-"1 is the requester supervisor, 2 the supervisor of that supervisor, and so "
-"on."
-msgstr ""
-"1 é o supervisor do requerente, 2 o supervisor desse supervisor, e assim por "
-"diante."
-
-#: templates/node.html.twig src/View/DiagramView.php:299
-msgid "When the manager is missing"
-msgstr "Quando o gestor não existir"
-
-#: templates/node.html.twig src/View/DiagramView.php:301
-msgid "Solve the ticket"
-msgstr "Solucionar o chamado"
 
 #: templates/category_workflow.html.twig
 msgid "Inactive"
@@ -242,7 +190,7 @@ msgstr "Esta categoria já está vinculada ao workflow \"%s\"."
 msgid "This category is already linked to a workflow."
 msgstr "Esta categoria já está vinculada a um workflow."
 
-#: src/Workflow.php:242
+#: src/Workflow.php:240
 msgid ""
 "This workflow has instances and cannot be purged. Deactivate it instead."
 msgstr ""
@@ -253,20 +201,21 @@ msgstr ""
 msgid "The start step cannot be deleted."
 msgstr "A etapa de início não pode ser excluída."
 
-#: src/Controller/DiagramEditController.php:284 src/Transition.php:241
-#: src/Node.php:384
+#: src/Controller/DiagramEditController.php:284 src/Transition.php:132
+#: src/Node.php:304
 msgid "Steps and transitions can only be changed in a draft version."
 msgstr "Etapas e transições só podem ser alteradas em uma versão rascunho."
 
-#: src/Controller/DiagramEditController.php:313 src/View/DiagramView.php:280
+#: src/Controller/DiagramEditController.php:313 src/View/DiagramView.php:281
 msgid "The change could not be saved."
 msgstr "Não foi possível salvar a alteração."
 
-#: src/Controller/PublishVersionController.php:91
+#: src/Controller/PublishVersionController.php:84
+#: src/Controller/PublishVersionController.php:96
 msgid "The version has been published."
 msgstr "A versão foi publicada."
 
-#: src/Controller/PublishVersionController.php:94 src/View/DiagramView.php:288
+#: src/Controller/PublishVersionController.php:99 src/View/DiagramView.php:289
 msgid "The version cannot be published:"
 msgstr "A versão não pode ser publicada:"
 
@@ -296,23 +245,43 @@ msgstr[1] "Instâncias de workflow"
 msgid "Flag workflow instances whose task or approval was removed"
 msgstr "Sinalizar instâncias de workflow cuja tarefa ou aprovação foi removida"
 
-#: src/View/DiagramView.php:279
+#: src/View/DiagramView.php:280
 msgid "The diagram could not be loaded."
 msgstr "Não foi possível carregar o diagrama."
 
-#: src/View/DiagramView.php:281
+#: src/View/DiagramView.php:282
 msgid "Drag a step onto the diagram"
 msgstr "Arraste uma etapa para o diagrama"
 
-#: src/View/DiagramView.php:290
+#: src/View/DiagramView.php:291
 msgid "Select a step to configure it."
 msgstr "Selecione uma etapa para configurá-la."
 
-#: src/View/DiagramView.php:291
+#: src/View/DiagramView.php:292
 msgid "The start step has nothing to configure."
 msgstr "A etapa de início não tem nada a configurar."
 
-#: src/View/DiagramView.php:305
+#: src/View/DiagramView.php:298
+msgid "Manager level"
+msgstr "Nível do gestor"
+
+#: src/View/DiagramView.php:299
+msgid ""
+"1 is the requester supervisor, 2 the supervisor of that supervisor, and so "
+"on."
+msgstr ""
+"1 é o supervisor do requerente, 2 o supervisor desse supervisor, e assim por "
+"diante."
+
+#: src/View/DiagramView.php:300
+msgid "When the manager is missing"
+msgstr "Quando o gestor não existir"
+
+#: src/View/DiagramView.php:302
+msgid "Solve the ticket"
+msgstr "Solucionar o chamado"
+
+#: src/View/DiagramView.php:306
 msgid "This step cannot be published yet:"
 msgstr "Esta etapa ainda não pode ser publicada:"
 
@@ -356,6 +325,10 @@ msgstr "Pulada"
 msgctxt "step status"
 msgid "Cancelled"
 msgstr "Cancelada"
+
+#: src/Enum/NodeType.php:43
+msgid "Start"
+msgstr "Início"
 
 #: src/Enum/NodeType.php:44
 msgid "Task"
@@ -497,86 +470,79 @@ msgstr "O requerente não tem gestor ativo no nível %d."
 msgid "Flowtask"
 msgstr "Flowtask"
 
-#: src/Transition.php:54
+#: src/Transition.php:50
 msgid "Transition"
 msgid_plural "Transitions"
 msgstr[0] "Transição"
 msgstr[1] "Transições"
 
-#: src/Transition.php:65 src/Transition.php:129
+#: src/Transition.php:61
 #, php-format
 msgid "%1$s to %2$s"
 msgstr "%1$s para %2$s"
 
-#: src/Transition.php:142
-msgid "Add a transition"
-msgstr "Adicionar uma transição"
-
-#: src/Transition.php:252
+#: src/Transition.php:143
 msgid "A transition must join two steps of its version."
 msgstr "Uma transição deve ligar duas etapas da sua versão."
 
-#: src/Transition.php:257
+#: src/Transition.php:148
 msgid "A transition cannot loop on a single step."
 msgstr "Uma transição não pode ligar uma etapa a ela mesma."
 
-#: src/Transition.php:261
+#: src/Transition.php:152
 msgid "A transition cannot enter the start step."
 msgstr "Uma transição não pode entrar na etapa de início."
 
-#: src/Transition.php:267
+#: src/Transition.php:158
 msgid "A transition cannot leave an end step."
 msgstr "Uma transição não pode sair de uma etapa de fim."
 
-#: src/Transition.php:270
+#: src/Transition.php:161
 #, php-format
 msgid "A step of type \"%1$s\" cannot fire the condition \"%2$s\"."
 msgstr "Uma etapa do tipo \"%1$s\" não pode disparar a condição \"%2$s\"."
 
-#: src/Transition.php:282
+#: src/Transition.php:173
 #, php-format
 msgid "Step \"%1$s\" already has a \"%2$s\" transition."
 msgstr "A etapa \"%1$s\" já tem uma transição \"%2$s\"."
 
-#: src/Http/VersionItemForm.php:104
-#, php-format
-msgid "This step cannot be published yet: %s"
-msgstr "Esta etapa ainda não pode ser publicada: %s"
-
-#: src/Node.php:90
+#: src/Node.php:87
 #, php-format
 msgid "%1$s (level %2$d)"
 msgstr "%1$s (nível %2$d)"
 
-#: src/Node.php:142
-msgid "Add a step"
-msgstr "Adicionar uma etapa"
-
-#: src/Node.php:230
+#: src/Node.php:150
 msgid "The start step is created with the draft and cannot be added."
 msgstr "A etapa de início é criada com o rascunho e não pode ser adicionada."
 
-#: src/Node.php:259
+#: src/Node.php:179
 msgid "The start step cannot be edited."
 msgstr "A etapa de início não pode ser editada."
 
-#: src/Node.php:290
+#: src/Node.php:210
 msgid "Transitions this step can no longer fire were removed."
 msgstr "As transições que esta etapa não pode mais disparar foram removidas."
 
-#: src/WorkflowVersion.php:119
+#: src/WorkflowVersion.php:67
+msgid "Workflow version"
+msgid_plural "Workflow versions"
+msgstr[0] "Versão do workflow"
+msgstr[1] "Versões do workflow"
+
+#: src/WorkflowVersion.php:117
 msgid "Version history"
 msgstr "Histórico de versões"
 
-#: src/WorkflowVersion.php:260
+#: src/WorkflowVersion.php:258
 msgid "This workflow already has a draft version."
 msgstr "Este workflow já tem uma versão rascunho."
 
-#: src/WorkflowVersion.php:291
+#: src/WorkflowVersion.php:289
 msgid "A published version cannot be modified. Create a draft instead."
 msgstr "Uma versão publicada não pode ser modificada. Crie um rascunho."
 
-#: src/WorkflowVersion.php:330
+#: src/WorkflowVersion.php:328
 msgid "This version has instances and cannot be purged."
 msgstr "Esta versão tem instâncias e não pode ser excluída permanentemente."
 
