@@ -50,6 +50,21 @@ final class DiagramEditTest extends DbTestCase
 {
     use WorkflowFixtures;
 
+    public function testNewEndStepSolvesTheTicketUnlessTurnedOff(): void
+    {
+        $this->login();
+        $draft = $this->createDraft();
+
+        $data = $this->decode($this->controller()->addNode($draft->getID(), $this->json(['type' => 'end', 'x' => 40, 'y' => 40])));
+        $this->assertIsArray($data['node']);
+        $node = new Node();
+        $this->assertTrue($node->getFromDB($data['node']['id']));
+        $this->assertSame(1, (int) $node->fields['solve_ticket']);
+
+        $this->assertSame(0, (int) $this->createNode($draft, NodeType::END, ['solve_ticket' => 0])->fields['solve_ticket']);
+        $this->assertSame(0, (int) $this->createNode($draft, NodeType::TASK)->fields['solve_ticket'], 'Only an end step solves the ticket');
+    }
+
     public function testStepAddedFromThePaletteIsSavedWhereItWasDropped(): void
     {
         $this->login();
