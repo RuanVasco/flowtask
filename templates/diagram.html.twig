@@ -1,0 +1,48 @@
+{#
+ # -------------------------------------------------------------------------
+ # Flowtask plugin for GLPI
+ # -------------------------------------------------------------------------
+ #
+ # LICENSE
+ #
+ # This file is part of Flowtask.
+ #
+ # Flowtask is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation, either version 3 of the License, or
+ # (at your option) any later version.
+ #
+ # Flowtask is distributed in the hope that it will be useful,
+ # but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ # GNU General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with Flowtask. If not, see <https://www.gnu.org/licenses/>.
+ # -------------------------------------------------------------------------
+ # @copyright Copyright (C) 2026 by Ruan Vasconcelos.
+ # @license   GPLv3+ https://www.gnu.org/licenses/gpl-3.0.html
+ # @link      https://github.com/RuanVasco/flowtask
+ # -------------------------------------------------------------------------
+ #}
+
+{#
+ # Workflow diagram (spec 002). The component reads its configuration from
+ # `data-config`, see js/diagram/main.tsx.
+ #}
+{% if bundle_url is null %}
+    {# Only administrators get the hint; the ticket tab just has no diagram. #}
+    {% if build_hint %}
+        <div class="alert alert-warning">
+            {{ __('The diagram is not built. Run npm install in the plugin directory.', 'flowtask') }}
+        </div>
+    {% endif %}
+{% else %}
+    {% set diagram_id = 'flowtask-diagram-' ~ random() %}
+    {# Loaded before the component, which needs the height to fit the view. #}
+    <link rel="stylesheet" href="{{ stylesheet_url }}">
+    <div id="{{ diagram_id }}" class="flowtask-diagram card mb-3" style="height: 420px;" data-config="{{ config|json_encode }}"></div>
+    <script>
+        import('{{ bundle_url|e('js') }}').then((module) => module.mount(document.getElementById('{{ diagram_id }}')));
+    </script>
+{% endif %}

@@ -38,6 +38,7 @@ use Glpi\Application\View\TemplateRenderer;
 use GlpiPlugin\Flowtask\Engine\WorkflowEngine;
 use GlpiPlugin\Flowtask\Enum\InstanceStatus;
 use GlpiPlugin\Flowtask\Support\Fields;
+use GlpiPlugin\Flowtask\View\DiagramView;
 use GlpiPlugin\Flowtask\View\InstanceTimeline;
 use Session;
 use Ticket;
@@ -94,7 +95,9 @@ class Instance extends CommonDBChild
         if ($instance instanceof self) {
             TemplateRenderer::getInstance()->display(
                 '@flowtask/ticket_workflow.html.twig',
-                (new InstanceTimeline($DB))->build($instance, $item),
+                (new InstanceTimeline($DB))->build($instance, $item) + [
+                    'diagram' => DiagramView::context(DiagramView::getInstanceGraphURL($instance->getID())),
+                ],
             );
         }
 

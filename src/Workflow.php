@@ -73,6 +73,7 @@ class Workflow extends CommonDBTM
     {
         $tabs = [];
         $this->addDefaultFormTab($tabs);
+        $this->addStandardTab(Diagram::class, $tabs, $options);
         $this->addStandardTab(Node::class, $tabs, $options);
         $this->addStandardTab(Transition::class, $tabs, $options);
         $this->addStandardTab(Workflow_ITILCategory::class, $tabs, $options);
