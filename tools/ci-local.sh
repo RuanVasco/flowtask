@@ -57,8 +57,8 @@ docker run -d --name "${NETWORK}-db" --network "$NETWORK" --network-alias db --s
 docker run --rm --network "$NETWORK" -e FIX="$FIX" -v "${ROOT}:/src" "$IMAGE" bash -c '
 set -uo pipefail
 PLUGIN=/var/www/glpi/plugins/flowtask
-cp -r /src "$PLUGIN"
-rm -rf "$PLUGIN/vendor" "$PLUGIN/var"
+mkdir -p "$PLUGIN"
+tar -C /src --exclude=./vendor --exclude=./var --exclude=./node_modules --exclude=./public/lib/diagram -cf - . | tar -C "$PLUGIN" -xf -
 cd "$PLUGIN" && composer install -q --no-interaction
 
 FAILED=0
@@ -77,10 +77,13 @@ if [ "$FIX" = "1" ]; then
     ../../vendor/bin/rector process --no-progress-bar >/dev/null
     PHP_CS_FIXER_IGNORE_ENV=1 php ../../vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --show-progress none >/dev/null
     php ../../bin/console tools:licence_headers_check --no-interaction --plugin=flowtask --fix >/dev/null
-    tar -C "$PLUGIN" --exclude=./.git --exclude=./vendor --exclude=./var --exclude=./composer.lock -cf - . | tar -C /src -xf -
+    tar -C "$PLUGIN" --exclude=./.git --exclude=./vendor --exclude=./var --exclude=./composer.lock --exclude=./node_modules --exclude=./public/lib/diagram -cf - . | tar -C /src -xf -
     echo "Fixes applied to the working tree."
 fi
 
+# npm install runs the build (postinstall), as in CI and in the release archive.
+step "npm build"     npm install --no-save --no-audit --no-fund
+step "vitest"        node_modules/.bin/vitest run
 step "parallel-lint" ../../vendor/bin/parallel-lint --exclude ./vendor/ --exclude ./node_modules/ --no-progress .
 step "php-cs-fixer"  env PHP_CS_FIXER_IGNORE_ENV=1 php ../../vendor/bin/php-cs-fixer check --config=.php-cs-fixer.php --no-interaction --show-progress none
 step "phpstan"       ../../vendor/bin/phpstan analyze --memory-limit=2G --no-progress
