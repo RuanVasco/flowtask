@@ -31,14 +31,12 @@
 namespace GlpiPlugin\Flowtask;
 
 use CommonDBChild;
-use CommonGLPI;
 use DBmysql;
-use Glpi\Application\View\TemplateRenderer;
 use GlpiPlugin\Flowtask\Definition\StepConfiguration;
 use GlpiPlugin\Flowtask\Enum\ActorType;
-use GlpiPlugin\Flowtask\Enum\MissingManagerBehavior;
 use GlpiPlugin\Flowtask\Enum\NodeType;
 use GlpiPlugin\Flowtask\Enum\TransitionCondition;
+use GlpiPlugin\Flowtask\Support\DiagramOnly;
 use GlpiPlugin\Flowtask\Support\Fields;
 use Group;
 use Session;
@@ -50,6 +48,8 @@ use User;
  */
 class Node extends CommonDBChild
 {
+    use DiagramOnly;
+
     public static string $itemtype = WorkflowVersion::class;
 
     public static string $items_id = 'plugin_flowtask_workflowversions_id';
@@ -96,60 +96,6 @@ class Node extends CommonDBChild
         };
     }
 
-    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
-    {
-        if (!$item instanceof WorkflowVersion && !$item instanceof Workflow || $item->isNewItem()) {
-            return '';
-        }
-
-        // Resolving the current version costs queries: only do it for the count.
-        $version = $_SESSION['glpishow_count_on_tabs'] ? WorkflowVersion::forTab($item) : null;
-        $count   = $version instanceof WorkflowVersion
-            ? countElementsInTable(self::getTable(), [self::$items_id => $version->getID()])
-            : 0;
-
-        return self::createTabEntry(self::getTypeName(Session::getPluralNumber()), $count, $item::class, self::getIcon());
-    }
-
-    public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0)
-    {
-        $version = WorkflowVersion::forTab($item);
-        if (!$version instanceof WorkflowVersion) {
-            return false;
-        }
-
-        self::showForVersion($version);
-
-        return true;
-    }
-
-    public static function showForVersion(WorkflowVersion $version): void
-    {
-        $entries = [];
-        foreach (self::getForVersion($version->getID()) as $node) {
-            $entries[] = [
-                'name'      => $node->getLink(),
-                'node_type' => htmlescape($node->getNodeType()?->label() ?? ''),
-                'actor'     => htmlescape($node->getActorLabel()),
-            ];
-        }
-
-        TemplateRenderer::getInstance()->display('@flowtask/version_children.html.twig', [
-            'readonly'   => !$version->isDraft(),
-            'add_url'    => $version->canUpdateItem()
-                ? self::getFormURL() . '?' . http_build_query([self::$items_id => $version->getID()])
-                : null,
-            'add_label'  => __('Add a step', 'flowtask'),
-            'columns'    => [
-                'name'      => __('Name'),
-                'node_type' => _n('Type', 'Types', 1),
-                'actor'     => __('Actor', 'flowtask'),
-            ],
-            'formatters' => ['name' => 'raw_html', 'node_type' => 'raw_html', 'actor' => 'raw_html'],
-            'entries'    => $entries,
-        ]);
-    }
-
     /**
      * @return list<self>
      */
@@ -170,40 +116,6 @@ class Node extends CommonDBChild
         }
 
         return $nodes;
-    }
-
-
-    public function showForm($ID, array $options = [])
-    {
-        $this->initForm($ID, $options);
-
-        $version = $this->getItem();
-        $types   = [];
-        foreach ([NodeType::TASK, NodeType::APPROVAL, NodeType::END] as $type) {
-            $types[$type->value] = $type->label();
-        }
-
-        $actors = [];
-        foreach (ActorType::cases() as $actor) {
-            $actors[$actor->value] = $actor->label();
-        }
-
-        $behaviors = [];
-        foreach (MissingManagerBehavior::cases() as $behavior) {
-            $behaviors[$behavior->value] = $behavior->label();
-        }
-
-        TemplateRenderer::getInstance()->display('@flowtask/node.html.twig', [
-            'item'         => $this,
-            'params'       => $options,
-            'version_link' => $version instanceof WorkflowVersion ? $version->getLink() : '',
-            'is_start'     => $this->isStart(),
-            'node_types'   => $types,
-            'actor_types'  => $actors,
-            'behaviors'    => $behaviors,
-        ]);
-
-        return true;
     }
 
     /**

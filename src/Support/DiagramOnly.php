@@ -28,9 +28,39 @@
  * -------------------------------------------------------------------------
  */
 
-use GlpiPlugin\Flowtask\Http\VersionItemForm;
-use GlpiPlugin\Flowtask\Transition;
+namespace GlpiPlugin\Flowtask\Support;
 
-Session::checkCentralAccess();
+/**
+ * Items of a version graph (steps and transitions) are seen and changed on
+ * the diagram only (spec 002, AC-12). GLPI opens generic entry points to any
+ * item class (form and list pages, API, massive actions), which all check
+ * these rights, so they are closed. The diagram endpoints check the rights
+ * on the workflow and call the item classes directly.
+ */
+trait DiagramOnly
+{
+    public static function canView(): bool
+    {
+        return false;
+    }
 
-VersionItemForm::handle(new Transition(), $_GET, $_POST);
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canUpdate(): bool
+    {
+        return false;
+    }
+
+    public static function canDelete(): bool
+    {
+        return false;
+    }
+
+    public static function canPurge(): bool
+    {
+        return false;
+    }
+}

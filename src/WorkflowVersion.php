@@ -99,8 +99,6 @@ class WorkflowVersion extends CommonDBChild
         $tabs = [];
         $this->addDefaultFormTab($tabs);
         $this->addStandardTab(Diagram::class, $tabs, $options);
-        $this->addStandardTab(Node::class, $tabs, $options);
-        $this->addStandardTab(Transition::class, $tabs, $options);
         $this->addStandardTab(Log::class, $tabs, $options);
 
         return $tabs;
@@ -207,8 +205,8 @@ class WorkflowVersion extends CommonDBChild
 
 
     /**
-     * The version shown by a steps or transitions tab: the version itself,
-     * or the current version of a workflow.
+     * The version shown by the diagram tab: the version itself, or the
+     * current version of a workflow.
      */
     public static function forTab(CommonGLPI $item): ?self
     {

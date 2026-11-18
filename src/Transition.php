@@ -31,11 +31,9 @@
 namespace GlpiPlugin\Flowtask;
 
 use CommonDBChild;
-use CommonGLPI;
-use DBmysql;
-use Glpi\Application\View\TemplateRenderer;
 use GlpiPlugin\Flowtask\Enum\NodeType;
 use GlpiPlugin\Flowtask\Enum\TransitionCondition;
+use GlpiPlugin\Flowtask\Support\DiagramOnly;
 use GlpiPlugin\Flowtask\Support\Fields;
 use Session;
 
@@ -45,6 +43,8 @@ use Session;
  */
 class Transition extends CommonDBChild
 {
+    use DiagramOnly;
+
     public static string $itemtype = WorkflowVersion::class;
 
     public static string $items_id = 'plugin_flowtask_workflowversions_id';
@@ -71,121 +71,6 @@ class Transition extends CommonDBChild
     public function getCondition(): ?TransitionCondition
     {
         return TransitionCondition::tryFrom(Fields::string($this->fields, 'trigger_condition'));
-    }
-
-    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
-    {
-        if (!$item instanceof WorkflowVersion && !$item instanceof Workflow || $item->isNewItem()) {
-            return '';
-        }
-
-        // Resolving the current version costs queries: only do it for the count.
-        $version = $_SESSION['glpishow_count_on_tabs'] ? WorkflowVersion::forTab($item) : null;
-        $count   = $version instanceof WorkflowVersion
-            ? countElementsInTable(self::getTable(), [self::$items_id => $version->getID()])
-            : 0;
-
-        return self::createTabEntry(self::getTypeName(Session::getPluralNumber()), $count, $item::class, self::getIcon());
-    }
-
-    public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0)
-    {
-        $version = WorkflowVersion::forTab($item);
-        if (!$version instanceof WorkflowVersion) {
-            return false;
-        }
-
-        self::showForVersion($version);
-
-        return true;
-    }
-
-    public static function showForVersion(WorkflowVersion $version): void
-    {
-        /** @var DBmysql $DB */
-        global $DB;
-
-        // One query for the step names instead of one per transition end.
-        $names = [];
-        foreach (Node::getForVersion($version->getID()) as $node) {
-            $names[$node->getID()] = $node->getName();
-        }
-
-        $entries = [];
-        foreach ($DB->request(['FROM' => self::getTable(), 'WHERE' => [self::$items_id => $version->getID()], 'ORDER' => 'id']) as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
-
-            $transition = new self();
-            $transition->getFromResultSet($row);
-            $source = $names[Fields::int($row, 'plugin_flowtask_nodes_id_source')] ?? '';
-            $target = $names[Fields::int($row, 'plugin_flowtask_nodes_id_target')] ?? '';
-
-            $entries[] = [
-                'link'      => sprintf(
-                    '<a href="%s">%s</a>',
-                    htmlescape($transition->getLinkURL()),
-                    htmlescape(sprintf(__('%1$s to %2$s', 'flowtask'), $source, $target)),
-                ),
-                'source'    => htmlescape($source),
-                'condition' => htmlescape($transition->getCondition()?->label() ?? ''),
-                'target'    => htmlescape($target),
-            ];
-        }
-
-        TemplateRenderer::getInstance()->display('@flowtask/version_children.html.twig', [
-            'readonly'   => !$version->isDraft(),
-            'add_url'    => $version->canUpdateItem()
-                ? self::getFormURL() . '?' . http_build_query([self::$items_id => $version->getID()])
-                : null,
-            'add_label'  => __('Add a transition', 'flowtask'),
-            'columns'    => [
-                'link'      => self::getTypeName(1),
-                'source'    => __('From step', 'flowtask'),
-                'condition' => __('Condition', 'flowtask'),
-                'target'    => __('To step', 'flowtask'),
-            ],
-            'formatters' => ['link' => 'raw_html', 'source' => 'raw_html', 'condition' => 'raw_html', 'target' => 'raw_html'],
-            'entries'    => $entries,
-        ]);
-    }
-
-
-    public function showForm($ID, array $options = [])
-    {
-        $this->initForm($ID, $options);
-
-        $version  = $this->getItem();
-        $sources  = [];
-        $targets  = [];
-        foreach (Node::getForVersion(Fields::int($this->fields, self::$items_id)) as $node) {
-            $type = $node->getNodeType();
-            $name = $node->getName();
-            if ($type !== NodeType::END) {
-                $sources[$node->getID()] = $name;
-            }
-
-            if ($type !== NodeType::START) {
-                $targets[$node->getID()] = $name;
-            }
-        }
-
-        $conditions = [];
-        foreach (TransitionCondition::cases() as $condition) {
-            $conditions[$condition->value] = $condition->label();
-        }
-
-        TemplateRenderer::getInstance()->display('@flowtask/transition.html.twig', [
-            'item'         => $this,
-            'params'       => $options,
-            'version_link' => $version instanceof WorkflowVersion ? $version->getLink() : '',
-            'sources'      => $sources,
-            'targets'      => $targets,
-            'conditions'   => $conditions,
-        ]);
-
-        return true;
     }
 
     public function prepareInputForAdd($input)
