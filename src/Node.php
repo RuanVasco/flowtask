@@ -144,6 +144,11 @@ class Node extends CommonDBChild
             return false;
         }
 
+        // A new end step solves the ticket unless told otherwise (spec 001).
+        if (Fields::string($input, 'node_type') === NodeType::END->value && !array_key_exists('solve_ticket', $input)) {
+            $input['solve_ticket'] = 1;
+        }
+
         return $this->withConfiguration($input, $input);
     }
 
