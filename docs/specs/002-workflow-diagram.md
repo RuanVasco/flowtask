@@ -8,7 +8,7 @@ In v0.1 a workflow is built through one GLPI form per step and per transition. B
 
 ## Scope
 
-A diagram component (React Flow, bundled with Vite into `public/`) shows the graph of a workflow version. It has two modes:
+A diagram component (React Flow, bundled with Vite into `public/lib/`) shows the graph of a workflow version. It has two modes:
 
 - **Editor**: on the workflow, when its current version is a draft and the user can update the workflow.
 - **Viewer**: on the workflow when the current version is published or archived (or the user cannot update it), on a version page, and on the ticket "Workflow" tab next to the timeline, with the active step highlighted.
@@ -45,7 +45,7 @@ A diagram component (React Flow, bundled with Vite into `public/`) shows the gra
 
 ### Build
 
-- Sources live in `js/` (React + TypeScript), built by Vite into `public/build/`. `package.json` pins React, React Flow (`@xyflow/react`) and dagre.
+- Sources live in `js/` (React + TypeScript), built by Vite into `public/lib/diagram/`. `package.json` pins React, React Flow (`@xyflow/react`) and dagre.
 - The built bundle is not committed. CI and `tools/ci-local.sh` install the npm dependencies and run the build, and fail when it fails. The release archive includes the built bundle.
 - `CONTRIBUTING.md` documents `npm install`, `npm run build` and `npm run dev` (watch) for the dev GLPI.
 
