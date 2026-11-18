@@ -91,7 +91,8 @@ trait WorkflowFixtures
             'name'                                => $this->getUniqueString(),
             'node_type'                           => $type->value,
         ];
-        if ($type === NodeType::TASK || $type === NodeType::APPROVAL) {
+        // A user actor unless the caller picks another one.
+        if (($type === NodeType::TASK || $type === NodeType::APPROVAL) && !isset($extra['actor_type'])) {
             $input['actor_type'] = ActorType::USER->value;
             $input['users_id']   = Session::getLoginUserID();
         }
