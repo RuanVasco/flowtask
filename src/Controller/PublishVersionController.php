@@ -35,16 +35,21 @@ use Glpi\Controller\AbstractController;
 use Glpi\Exception\Http\AccessDeniedHttpException;
 use Glpi\Exception\Http\NotFoundHttpException;
 use Glpi\Http\RedirectResponse;
+use GlpiPlugin\Flowtask\Definition\GraphValidator;
 use GlpiPlugin\Flowtask\Definition\VersionPublisher;
 use GlpiPlugin\Flowtask\Workflow;
 use GlpiPlugin\Flowtask\WorkflowVersion;
 use Html;
 use Session;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Publishes a draft version (spec 001, AC-1).
+ * Publishes a draft version (spec 001, AC-1), from the version card or from
+ * the diagram, which asks for JSON to point at the steps with a problem
+ * (spec 002, AC-6).
  */
 final class PublishVersionController extends AbstractController
 {
@@ -54,7 +59,7 @@ final class PublishVersionController extends AbstractController
         requirements: ['id' => '\d+'],
         methods: ['POST'],
     )]
-    public function __invoke(int $id): Response
+    public function __invoke(int $id, Request $request): Response
     {
         /** @var DBmysql $DB */
         global $DB;
@@ -72,6 +77,20 @@ final class PublishVersionController extends AbstractController
         }
 
         $errors = (new VersionPublisher($DB))->publish($version, (int) Session::getLoginUserID());
+
+        if (in_array('application/json', $request->getAcceptableContentTypes(), true)) {
+            if ($errors === []) {
+                // Shown once the diagram reloads the page.
+                Session::addMessageAfterRedirect(__s('The version has been published.', 'flowtask'));
+
+                return new JsonResponse(['published' => true]);
+            }
+
+            return new JsonResponse([
+                'errors'   => $errors,
+                'problems' => (new GraphValidator($DB))->findVersionProblems($version->getID()),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         if ($errors === []) {
             Session::addMessageAfterRedirect(__s('The version has been published.', 'flowtask'));
