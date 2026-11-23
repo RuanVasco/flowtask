@@ -74,7 +74,8 @@ function plugin_init_flowtask(): void
 
     // Workflow engine (spec 001, engine rules).
     $PLUGIN_HOOKS[Hooks::ITEM_ADD]['flowtask'] = [
-        Ticket::class => TicketEvents::onTicketAdd(...),
+        Ticket::class       => TicketEvents::onTicketAdd(...),
+        ITILFollowup::class => TicketEvents::onFollowupAdd(...),
     ];
     $PLUGIN_HOOKS[Hooks::ITEM_UPDATE]['flowtask'] = [
         Ticket::class           => TicketEvents::onTicketUpdate(...),

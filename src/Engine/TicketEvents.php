@@ -32,6 +32,7 @@ namespace GlpiPlugin\Flowtask\Engine;
 
 use DBmysql;
 use GlpiPlugin\Flowtask\Instance;
+use ITILFollowup;
 use Ticket;
 use TicketTask;
 use TicketValidation;
@@ -74,6 +75,11 @@ final class TicketEvents
     public static function onValidationUpdate(TicketValidation $validation): void
     {
         self::engine()->handleValidationUpdate($validation);
+    }
+
+    public static function onFollowupAdd(ITILFollowup $followup): void
+    {
+        self::engine()->handleFollowupAdd($followup);
     }
 
     private static function engine(): WorkflowEngine

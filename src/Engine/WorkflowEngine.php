@@ -33,6 +33,7 @@ namespace GlpiPlugin\Flowtask\Engine;
 use CommonDBTM;
 use CommonITILValidation;
 use DBmysql;
+use GlpiPlugin\Flowtask\Enum\ActorType;
 use GlpiPlugin\Flowtask\Enum\InstanceStatus;
 use GlpiPlugin\Flowtask\Enum\MissingManagerBehavior;
 use GlpiPlugin\Flowtask\Enum\NodeType;
@@ -45,6 +46,7 @@ use GlpiPlugin\Flowtask\Support\Fields;
 use GlpiPlugin\Flowtask\Transition;
 use GlpiPlugin\Flowtask\Workflow;
 use GlpiPlugin\Flowtask\WorkflowVersion;
+use ITILFollowup;
 use ITILSolution;
 use Planning;
 use Session;
@@ -125,6 +127,48 @@ final readonly class WorkflowEngine
         if ($condition instanceof TransitionCondition) {
             $this->advance(TicketValidation::class, $validation->getID(), $condition);
         }
+    }
+
+    /**
+     * A public followup by the requester a task step is assigned to marks
+     * that task done, which ends the step through the task hook (spec 003,
+     * AC-4).
+     */
+    public function handleFollowupAdd(ITILFollowup $followup): void
+    {
+        $author = Fields::int($followup->fields, 'users_id');
+        if (
+            Fields::string($followup->fields, 'itemtype') !== Ticket::class
+            || Fields::int($followup->fields, 'is_private') !== 0
+            || $author <= 0
+        ) {
+            return;
+        }
+
+        $instance = Instance::getForTicket(Fields::int($followup->fields, 'items_id'));
+        $step     = $instance instanceof Instance && $instance->getStatus() === InstanceStatus::RUNNING
+            ? InstanceStep::getActiveForInstance($instance->getID())
+            : null;
+        $node = $step?->getNode();
+        if (
+            !$step instanceof InstanceStep
+            || !$node instanceof Node
+            || $node->getNodeType() !== NodeType::TASK
+            || ActorType::tryFrom(Fields::string($node->fields, 'actor_type')) !== ActorType::REQUESTER
+        ) {
+            return;
+        }
+
+        $task = $this->loadStepItem($step);
+        if (
+            !$task instanceof TicketTask
+            || Fields::int($task->fields, 'users_id_tech') !== $author
+            || Fields::int($task->fields, 'state') === Planning::DONE
+        ) {
+            return;
+        }
+
+        $task->update(['id' => $task->getID(), 'state' => Planning::DONE]);
     }
 
     /**
