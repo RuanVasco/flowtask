@@ -112,4 +112,24 @@ final class InstallTest extends TestCase
         $count = countElementsInTable('glpi_profilerights', ['name' => Workflow::$rightname]);
         $this->assertSame(countElementsInTable('glpi_profiles'), $count);
     }
+
+    /**
+     * Spec 003: installs made before the ticket status of a step get the
+     * column on the next install or update.
+     */
+    public function testInstallAddsTheTicketStatusOfStepsWhenMissing(): void
+    {
+        /** @var DBmysql $DB */
+        global $DB;
+
+        $DB->doQuery('ALTER TABLE `glpi_plugin_flowtask_nodes` DROP COLUMN `ticket_status`');
+        $this->assertFalse($DB->fieldExists('glpi_plugin_flowtask_nodes', 'ticket_status', false));
+
+        (new Installer($DB))->install(new Migration(PLUGIN_FLOWTASK_VERSION));
+
+        $this->assertTrue($DB->fieldExists('glpi_plugin_flowtask_nodes', 'ticket_status', false));
+        $checker = new DatabaseSchemaConsistencyChecker($DB);
+        $this->assertSame([], $checker->getMissingFields('glpi_plugin_flowtask_nodes'));
+        $this->assertSame([], $checker->getInvalidFieldsTypes('glpi_plugin_flowtask_nodes'));
+    }
 }

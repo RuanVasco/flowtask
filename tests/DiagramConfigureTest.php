@@ -46,6 +46,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use TaskTemplate;
+use Ticket;
 use User;
 
 /**
@@ -72,6 +73,7 @@ final class DiagramConfigureTest extends DbTestCase
             'groups_id'        => 5,
             'tasktemplates_id' => $template->getID(),
             'solve_ticket'     => 1,
+            'ticket_status'    => Ticket::WAITING,
         ])));
 
         $this->assertIsArray($data['node']);
@@ -84,6 +86,8 @@ final class DiagramConfigureTest extends DbTestCase
         // Normalized as in the step form: fields that do not apply are reset.
         $this->assertSame(0, $node['config']['groups_id']);
         $this->assertFalse($node['config']['solve_ticket']);
+        // Spec 003, AC-5.
+        $this->assertSame(Ticket::WAITING, $node['config']['ticket_status']);
     }
 
     public function testOnlyEditorsGetTheProblemsAndPanelValues(): void
