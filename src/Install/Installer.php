@@ -73,7 +73,7 @@ final readonly class Installer
             }
         }
 
-        $this->update();
+        $this->update($migration);
 
         $migration->addCrontask(Instance::class, Instance::CRON_CHECK, HOUR_TIMESTAMP);
 
@@ -96,10 +96,14 @@ final readonly class Installer
     }
 
     /**
-     * Schema changes for releases after 0.1.0 go here, each one guarded so it
-     * only runs on databases that still need it.
+     * Schema changes for databases created by an earlier install, each one
+     * guarded so it only runs on databases that still need it.
      */
-    private function update(): void {}
+    private function update(Migration $migration): void
+    {
+        // Spec 003: installs made before the ticket status of a step.
+        $migration->addField('glpi_plugin_flowtask_nodes', 'ticket_status', "int NOT NULL DEFAULT '0'", ['after' => 'solve_ticket']);
+    }
 
     /**
      * @param list<string> $columns
@@ -171,6 +175,7 @@ final readonly class Installer
                 "`missing_manager_behavior` varchar(10) NOT NULL DEFAULT 'block'",
                 "`tasktemplates_id` int {sign} NOT NULL DEFAULT '0'",
                 "`solve_ticket` tinyint NOT NULL DEFAULT '0'",
+                "`ticket_status` int NOT NULL DEFAULT '0'",
                 "`position_x` int NOT NULL DEFAULT '0'",
                 "`position_y` int NOT NULL DEFAULT '0'",
                 "`date_creation` timestamp NULL DEFAULT NULL",

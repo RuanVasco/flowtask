@@ -69,6 +69,7 @@ final class DiagramEditController extends AbstractController
         'missing_manager_behavior',
         'tasktemplates_id',
         'solve_ticket',
+        'ticket_status',
     ];
 
     #[Route(

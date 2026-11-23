@@ -34,6 +34,7 @@ use GlpiPlugin\Flowtask\Enum\ActorType;
 use GlpiPlugin\Flowtask\Enum\MissingManagerBehavior;
 use GlpiPlugin\Flowtask\Enum\NodeType;
 use GlpiPlugin\Flowtask\Support\Fields;
+use Ticket;
 
 /**
  * Rules on the configuration fields of a step (spec 001, definition
@@ -42,6 +43,9 @@ use GlpiPlugin\Flowtask\Support\Fields;
  */
 final class StepConfiguration
 {
+    /** Ticket statuses a step can set (spec 003); 0 leaves the status alone. */
+    public const TICKET_STATUSES = [Ticket::ASSIGNED, Ticket::PLANNED, Ticket::WAITING];
+
     /**
      * Configuration fields of the step, with the ones that do not apply to
      * its type or actor reset to their defaults.
@@ -63,6 +67,7 @@ final class StepConfiguration
             'missing_manager_behavior' => MissingManagerBehavior::BLOCK->value,
             'tasktemplates_id'         => $type === NodeType::TASK ? Fields::int($fields, 'tasktemplates_id') : 0,
             'solve_ticket'             => $type === NodeType::END && Fields::int($fields, 'solve_ticket') > 0 ? 1 : 0,
+            'ticket_status'            => self::needsActor($type) ? self::ticketStatus($fields) : 0,
         ];
 
         $actor_field = $actor?->field();
@@ -123,6 +128,16 @@ final class StepConfiguration
         return NodeType::tryFrom(Fields::string($fields, 'node_type')) === null
             ? __('The step type is invalid.', 'flowtask')
             : null;
+    }
+
+    /**
+     * @param array<mixed> $fields
+     */
+    private static function ticketStatus(array $fields): int
+    {
+        $status = Fields::int($fields, 'ticket_status');
+
+        return in_array($status, self::TICKET_STATUSES, true) ? $status : 0;
     }
 
     private static function needsActor(?NodeType $type): bool

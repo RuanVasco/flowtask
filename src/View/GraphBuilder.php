@@ -174,6 +174,7 @@ final readonly class GraphBuilder
                 'tasktemplates_id'         => $tasktemplates_id,
                 'tasktemplates_name'       => $tasktemplates_id > 0 ? TaskTemplate::getFriendlyNameById($tasktemplates_id) : '',
                 'solve_ticket'             => Fields::int($node->fields, 'solve_ticket') > 0,
+                'ticket_status'            => Fields::int($node->fields, 'ticket_status'),
             ],
         ];
     }
