@@ -1,6 +1,6 @@
 # 003 - Requester as actor and ticket status per step
 
-Status: Accepted
+Status: Implemented
 
 ## Problem
 
