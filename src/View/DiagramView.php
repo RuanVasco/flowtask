@@ -33,6 +33,7 @@ namespace GlpiPlugin\Flowtask\View;
 use Dropdown;
 use Entity;
 use Glpi\Application\View\TemplateRenderer;
+use GlpiPlugin\Flowtask\Definition\StepConfiguration;
 use GlpiPlugin\Flowtask\Enum\ActorType;
 use GlpiPlugin\Flowtask\Enum\MissingManagerBehavior;
 use GlpiPlugin\Flowtask\Enum\NodeType;
@@ -44,6 +45,7 @@ use GlpiPlugin\Flowtask\WorkflowVersion;
 use Group;
 use Session;
 use TaskTemplate;
+use Ticket;
 use User;
 
 use function Safe\filemtime;
@@ -211,13 +213,20 @@ final class DiagramView
     }
 
     /**
-     * Choices of the side panel, labelled.
+     * Choices of the side panel, labelled, and the ticket status a requester
+     * step gets by default (spec 003).
      *
-     * @return array<string, array<string, string>>
+     * @return array{step_types: array<string, string>, actor_types: array<string, string>, behaviors: array<string, string>, ticket_statuses: array<int, string>, requester_ticket_status: int}
      */
     private static function getOptions(): array
     {
-        $options = ['step_types' => [], 'actor_types' => [], 'behaviors' => []];
+        $options = [
+            'step_types'              => [],
+            'actor_types'             => [],
+            'behaviors'               => [],
+            'ticket_statuses'         => [0 => __('Do not change', 'flowtask')],
+            'requester_ticket_status' => Ticket::WAITING,
+        ];
         foreach ([NodeType::TASK, NodeType::APPROVAL, NodeType::END] as $type) {
             $options['step_types'][$type->value] = $type->label();
         }
@@ -228,6 +237,10 @@ final class DiagramView
 
         foreach (MissingManagerBehavior::cases() as $behavior) {
             $options['behaviors'][$behavior->value] = $behavior->label();
+        }
+
+        foreach (StepConfiguration::TICKET_STATUSES as $status) {
+            $options['ticket_statuses'][$status] = (string) Ticket::getStatus($status);
         }
 
         return $options;
@@ -300,6 +313,7 @@ final class DiagramView
             'missing_manager' => __('When the manager is missing', 'flowtask'),
             'task_template'  => TaskTemplate::getTypeName(1),
             'solve_ticket'   => __('Solve the ticket', 'flowtask'),
+            'ticket_status'  => __('Ticket status', 'flowtask'),
             'none'           => Dropdown::EMPTY_VALUE,
             'search'         => __('Search'),
             'no_results'     => __('No results found'),

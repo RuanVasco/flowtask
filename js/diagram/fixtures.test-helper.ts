@@ -51,6 +51,7 @@ export function makeNode(id: number, type: NodeType, x = 0, y = 0): GraphNode {
             tasktemplates_id: 0,
             tasktemplates_name: '',
             solve_ticket: false,
+            ticket_status: 0,
         },
     };
 }

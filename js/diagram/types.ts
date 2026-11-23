@@ -52,6 +52,7 @@ export interface StepConfig {
     tasktemplates_id: number;
     tasktemplates_name: string;
     solve_ticket: boolean;
+    ticket_status: number;
 }
 
 export interface GraphNode {
@@ -109,6 +110,7 @@ export interface Strings {
     missing_manager: string;
     task_template: string;
     solve_ticket: string;
+    ticket_status: string;
     none: string;
     search: string;
     no_results: string;
@@ -137,6 +139,10 @@ export interface Options {
     step_types: Record<string, string>;
     actor_types: Record<string, string>;
     behaviors: Record<string, string>;
+    /** Ticket::* status values, 0 for "do not change" (spec 003). */
+    ticket_statuses: Record<string, string>;
+    /** Status a step gets when its actor becomes the requester and it had none. */
+    requester_ticket_status: number;
 }
 
 /** A form posted to a GLPI page (version form), as the version card does. */

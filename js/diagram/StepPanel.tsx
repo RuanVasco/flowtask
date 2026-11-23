@@ -41,6 +41,7 @@ export interface StepFields {
     missing_manager_behavior: string;
     tasktemplates_id: number;
     solve_ticket: number;
+    ticket_status: number;
 }
 
 interface FormState extends StepFields {
@@ -60,6 +61,7 @@ const NO_CONFIG: StepConfig = {
     tasktemplates_id: 0,
     tasktemplates_name: '',
     solve_ticket: false,
+    ticket_status: 0,
 };
 
 function fromStep(step: GraphNode): FormState {
@@ -78,6 +80,7 @@ function fromStep(step: GraphNode): FormState {
         tasktemplates_id: config.tasktemplates_id,
         tasktemplates_name: config.tasktemplates_name,
         solve_ticket: config.solve_ticket ? 1 : 0,
+        ticket_status: config.ticket_status,
     };
 }
 
@@ -85,6 +88,21 @@ function toFields(form: FormState): StepFields {
     const { users_name: _u, groups_name: _g, tasktemplates_name: _t, ...fields } = form;
 
     return fields;
+}
+
+/**
+ * Fields changed by choosing an actor: the requester puts the ticket on the
+ * given status when the step had none, so the common case needs no extra
+ * click (spec 003, AC-6).
+ */
+export function actorChanges(
+    actor_type: string,
+    ticket_status: number,
+    requester_status: number,
+): Pick<StepFields, 'actor_type'> & Partial<Pick<StepFields, 'ticket_status'>> {
+    return actor_type === 'requester' && ticket_status === 0
+        ? { actor_type, ticket_status: requester_status }
+        : { actor_type };
 }
 
 interface StepPanelProps {
@@ -185,7 +203,9 @@ export function StepPanel({ step, config, onSave }: StepPanelProps) {
                         id={`${id}-actor`}
                         className="form-select form-select-sm"
                         value={form.actor_type}
-                        onChange={(event) => save({ actor_type: event.target.value })}
+                        onChange={(event) =>
+                            save(actorChanges(event.target.value, form.ticket_status, options.requester_ticket_status))
+                        }
                     >
                         <option value="">{strings.none}</option>
                         {Object.entries(options.actor_types).map(([value, label]) => (
@@ -261,6 +281,25 @@ export function StepPanel({ step, config, onSave }: StepPanelProps) {
                     value={{ id: form.tasktemplates_id, text: form.tasktemplates_name }}
                     onChange={(choice) => save({ tasktemplates_id: choice.id, tasktemplates_name: choice.text })}
                 />
+            )}
+            {withActor && (
+                <div className="mb-2">
+                    <label className="form-label" htmlFor={`${id}-status`}>
+                        {strings.ticket_status}
+                    </label>
+                    <select
+                        id={`${id}-status`}
+                        className="form-select form-select-sm"
+                        value={form.ticket_status}
+                        onChange={(event) => save({ ticket_status: Number(event.target.value) })}
+                    >
+                        {Object.entries(options.ticket_statuses).map(([value, label]) => (
+                            <option key={value} value={value}>
+                                {label}
+                            </option>
+                        ))}
+                    </select>
+                </div>
             )}
             {form.node_type === 'end' && (
                 <div className="form-check mb-2">
