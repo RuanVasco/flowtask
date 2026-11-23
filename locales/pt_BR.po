@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Flowtask\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-18 18:13+0000\n"
+"POT-Creation-Date: 2026-11-23 12:12+0000\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,7 +14,7 @@ msgid "The diagram is not built. Run npm install in the plugin directory."
 msgstr "O diagrama não foi gerado. Rode npm install na pasta do plugin."
 
 #: templates/publish_button.html.twig
-#: templates/workflow_current_version.html.twig src/View/DiagramView.php:287
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:300
 msgid "Publish"
 msgstr "Publicar"
 
@@ -24,7 +24,7 @@ msgstr ""
 "Verifica o grafo e torna esta a versão em que os novos chamados iniciam."
 
 #: templates/ticket_workflow.html.twig
-#: templates/workflow_current_version.html.twig src/View/DiagramView.php:84
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:86
 #: src/WorkflowVersion.php:77
 #, php-format
 msgid "Version %d"
@@ -56,13 +56,13 @@ msgstr "Cancelar workflow"
 msgid "The workflow is stuck."
 msgstr "O workflow está travado."
 
-#: templates/ticket_workflow.html.twig src/Node.php:62
+#: templates/ticket_workflow.html.twig src/Node.php:65
 msgid "Step"
 msgid_plural "Steps"
 msgstr[0] "Etapa"
 msgstr[1] "Etapas"
 
-#: templates/ticket_workflow.html.twig src/View/DiagramView.php:295
+#: templates/ticket_workflow.html.twig src/View/DiagramView.php:308
 msgid "Actor"
 msgstr "Responsável"
 
@@ -103,15 +103,15 @@ msgstr "Publicada em %1$s por %2$s."
 msgid "This workflow has no version yet."
 msgstr "Este workflow ainda não tem versão."
 
-#: templates/workflow_current_version.html.twig src/View/DiagramView.php:101
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:103
 msgid "Discard this draft and its changes?"
 msgstr "Descartar este rascunho e suas alterações?"
 
-#: templates/workflow_current_version.html.twig src/View/DiagramView.php:288
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:301
 msgid "Discard draft"
 msgstr "Descartar rascunho"
 
-#: templates/workflow_current_version.html.twig src/View/DiagramView.php:286
+#: templates/workflow_current_version.html.twig src/View/DiagramView.php:299
 msgid "Edit"
 msgstr "Editar"
 
@@ -197,16 +197,16 @@ msgstr ""
 "Este workflow tem instâncias e não pode ser excluído permanentemente. "
 "Desative-o."
 
-#: src/Controller/DiagramEditController.php:235
+#: src/Controller/DiagramEditController.php:236
 msgid "The start step cannot be deleted."
 msgstr "A etapa de início não pode ser excluída."
 
-#: src/Controller/DiagramEditController.php:284 src/Transition.php:132
-#: src/Node.php:304
+#: src/Controller/DiagramEditController.php:285 src/Transition.php:126
+#: src/Node.php:302
 msgid "Steps and transitions can only be changed in a draft version."
 msgstr "Etapas e transições só podem ser alteradas em uma versão rascunho."
 
-#: src/Controller/DiagramEditController.php:313 src/View/DiagramView.php:281
+#: src/Controller/DiagramEditController.php:314 src/View/DiagramView.php:294
 msgid "The change could not be saved."
 msgstr "Não foi possível salvar a alteração."
 
@@ -215,7 +215,7 @@ msgstr "Não foi possível salvar a alteração."
 msgid "The version has been published."
 msgstr "A versão foi publicada."
 
-#: src/Controller/PublishVersionController.php:99 src/View/DiagramView.php:289
+#: src/Controller/PublishVersionController.php:99 src/View/DiagramView.php:302
 msgid "The version cannot be published:"
 msgstr "A versão não pode ser publicada:"
 
@@ -245,27 +245,31 @@ msgstr[1] "Instâncias de workflow"
 msgid "Flag workflow instances whose task or approval was removed"
 msgstr "Sinalizar instâncias de workflow cuja tarefa ou aprovação foi removida"
 
-#: src/View/DiagramView.php:280
+#: src/View/DiagramView.php:227
+msgid "Do not change"
+msgstr "Não alterar"
+
+#: src/View/DiagramView.php:293
 msgid "The diagram could not be loaded."
 msgstr "Não foi possível carregar o diagrama."
 
-#: src/View/DiagramView.php:282
+#: src/View/DiagramView.php:295
 msgid "Drag a step onto the diagram"
 msgstr "Arraste uma etapa para o diagrama"
 
-#: src/View/DiagramView.php:291
+#: src/View/DiagramView.php:304
 msgid "Select a step to configure it."
 msgstr "Selecione uma etapa para configurá-la."
 
-#: src/View/DiagramView.php:292
+#: src/View/DiagramView.php:305
 msgid "The start step has nothing to configure."
 msgstr "A etapa de início não tem nada a configurar."
 
-#: src/View/DiagramView.php:298
+#: src/View/DiagramView.php:311
 msgid "Manager level"
 msgstr "Nível do gestor"
 
-#: src/View/DiagramView.php:299
+#: src/View/DiagramView.php:312
 msgid ""
 "1 is the requester supervisor, 2 the supervisor of that supervisor, and so "
 "on."
@@ -273,15 +277,19 @@ msgstr ""
 "1 é o supervisor do requerente, 2 o supervisor desse supervisor, e assim por "
 "diante."
 
-#: src/View/DiagramView.php:300
+#: src/View/DiagramView.php:313
 msgid "When the manager is missing"
 msgstr "Quando o gestor não existir"
 
-#: src/View/DiagramView.php:302
+#: src/View/DiagramView.php:315
 msgid "Solve the ticket"
 msgstr "Solucionar o chamado"
 
-#: src/View/DiagramView.php:306
+#: src/View/DiagramView.php:316
+msgid "Ticket status"
+msgstr "Status do chamado"
+
+#: src/View/DiagramView.php:320
 msgid "This step cannot be published yet:"
 msgstr "Esta etapa ainda não pode ser publicada:"
 
@@ -294,15 +302,19 @@ msgstr "%1$s #%2$d"
 msgid "Archived"
 msgstr "Arquivada"
 
-#: src/Enum/ActorType.php:42
+#: src/Enum/ActorType.php:43
 msgid "User"
 msgstr "Usuário"
 
-#: src/Enum/ActorType.php:43
+#: src/Enum/ActorType.php:44
 msgid "Group"
 msgstr "Grupo"
 
-#: src/Enum/ActorType.php:44
+#: src/Enum/ActorType.php:45
+msgid "Requester"
+msgstr "Requerente"
+
+#: src/Enum/ActorType.php:46
 msgid "Requester manager"
 msgstr "Gestor do requerente"
 
@@ -390,53 +402,53 @@ msgstr "Cancelado"
 msgid "Diagram"
 msgstr "Diagrama"
 
-#: src/Engine/WorkflowEngine.php:203
+#: src/Engine/WorkflowEngine.php:283
 #, php-format
 msgid "The task or approval of the step \"%s\" was removed."
 msgstr "A tarefa ou aprovação da etapa \"%s\" foi removida."
 
-#: src/Engine/WorkflowEngine.php:264
+#: src/Engine/WorkflowEngine.php:344
 #, php-format
 msgid "The step \"%1$s\" has no \"%2$s\" transition."
 msgstr "A etapa \"%1$s\" não tem transição \"%2$s\"."
 
-#: src/Engine/WorkflowEngine.php:279
+#: src/Engine/WorkflowEngine.php:359
 #, php-format
 msgid "More than %d steps were entered in a row without waiting for anyone."
 msgstr "Mais de %d etapas foram iniciadas em sequência sem aguardar ninguém."
 
-#: src/Engine/WorkflowEngine.php:315
+#: src/Engine/WorkflowEngine.php:395
 #, php-format
 msgid "The step \"%s\" cannot be entered."
 msgstr "A etapa \"%s\" não pode ser iniciada."
 
-#: src/Engine/WorkflowEngine.php:368
+#: src/Engine/WorkflowEngine.php:522
 #, php-format
 msgid "Solved by the workflow \"%s\"."
 msgstr "Solucionado pelo workflow \"%s\"."
 
-#: src/Engine/WorkflowEngine.php:374
+#: src/Engine/WorkflowEngine.php:529
 msgid "The workflow ended but the ticket could not be solved."
 msgstr "O workflow terminou, mas o chamado não pôde ser solucionado."
 
-#: src/Engine/WorkflowEngine.php:416
+#: src/Engine/WorkflowEngine.php:571
 #, php-format
 msgid "The workflow of this ticket is stuck: %s"
 msgstr "O workflow deste chamado está travado: %s"
 
-#: src/Engine/StepItemFactory.php:56
+#: src/Engine/StepItemFactory.php:57
 msgid "This step type does not create any item."
 msgstr "Este tipo de etapa não cria nenhum item."
 
-#: src/Engine/StepItemFactory.php:64
+#: src/Engine/StepItemFactory.php:65
 msgid "The task template of the step is missing."
 msgstr "O modelo de tarefa da etapa não existe."
 
-#: src/Engine/StepItemFactory.php:77
+#: src/Engine/StepItemFactory.php:84
 msgid "The ticket task could not be created."
 msgstr "A tarefa do chamado não pôde ser criada."
 
-#: src/Engine/StepItemFactory.php:90
+#: src/Engine/StepItemFactory.php:97
 msgid "The approval could not be created."
 msgstr "A aprovação não pôde ser criada."
 
@@ -445,23 +457,28 @@ msgid "This item was created by a running workflow and cannot be deleted."
 msgstr ""
 "Este item foi criado por um workflow em execução e não pode ser excluído."
 
-#: src/Engine/ActorResolver.php:57
+#: src/Engine/ActorResolver.php:58
 msgid "The step has no actor."
 msgstr "A etapa não tem responsável."
 
-#: src/Engine/ActorResolver.php:65
+#: src/Engine/ActorResolver.php:66
 msgid "The user of the step is missing, deleted or inactive."
 msgstr "O usuário da etapa não existe, foi excluído ou está inativo."
 
-#: src/Engine/ActorResolver.php:72
+#: src/Engine/ActorResolver.php:73
 msgid "The group of the step is missing."
 msgstr "O grupo da etapa não existe."
 
-#: src/Engine/ActorResolver.php:79 src/Engine/ActorResolver.php:84
+#: src/Engine/ActorResolver.php:84 src/Engine/ActorResolver.php:96
+#: src/Engine/ActorResolver.php:101
 msgid "The ticket has no requester user."
 msgstr "O chamado não tem usuário requerente."
 
-#: src/Engine/ActorResolver.php:91
+#: src/Engine/ActorResolver.php:89
+msgid "The requester of the ticket is deleted or inactive."
+msgstr "O requerente do chamado foi excluído ou está inativo."
+
+#: src/Engine/ActorResolver.php:108
 #, php-format
 msgid "The requester has no active manager at level %d."
 msgstr "O requerente não tem gestor ativo no nível %d."
@@ -470,57 +487,57 @@ msgstr "O requerente não tem gestor ativo no nível %d."
 msgid "Flowtask"
 msgstr "Flowtask"
 
-#: src/Transition.php:50
+#: src/Transition.php:54
 msgid "Transition"
 msgid_plural "Transitions"
 msgstr[0] "Transição"
 msgstr[1] "Transições"
 
-#: src/Transition.php:61
+#: src/Transition.php:65
 #, php-format
 msgid "%1$s to %2$s"
 msgstr "%1$s para %2$s"
 
-#: src/Transition.php:143
+#: src/Transition.php:137
 msgid "A transition must join two steps of its version."
 msgstr "Uma transição deve ligar duas etapas da sua versão."
 
-#: src/Transition.php:148
+#: src/Transition.php:142
 msgid "A transition cannot loop on a single step."
 msgstr "Uma transição não pode ligar uma etapa a ela mesma."
 
-#: src/Transition.php:152
+#: src/Transition.php:146
 msgid "A transition cannot enter the start step."
 msgstr "Uma transição não pode entrar na etapa de início."
 
-#: src/Transition.php:158
+#: src/Transition.php:152
 msgid "A transition cannot leave an end step."
 msgstr "Uma transição não pode sair de uma etapa de fim."
 
-#: src/Transition.php:161
+#: src/Transition.php:155
 #, php-format
 msgid "A step of type \"%1$s\" cannot fire the condition \"%2$s\"."
 msgstr "Uma etapa do tipo \"%1$s\" não pode disparar a condição \"%2$s\"."
 
-#: src/Transition.php:173
+#: src/Transition.php:167
 #, php-format
 msgid "Step \"%1$s\" already has a \"%2$s\" transition."
 msgstr "A etapa \"%1$s\" já tem uma transição \"%2$s\"."
 
-#: src/Node.php:87
+#: src/Node.php:91
 #, php-format
 msgid "%1$s (level %2$d)"
 msgstr "%1$s (nível %2$d)"
 
-#: src/Node.php:150
+#: src/Node.php:143
 msgid "The start step is created with the draft and cannot be added."
 msgstr "A etapa de início é criada com o rascunho e não pode ser adicionada."
 
-#: src/Node.php:179
+#: src/Node.php:177
 msgid "The start step cannot be edited."
 msgstr "A etapa de início não pode ser editada."
 
-#: src/Node.php:210
+#: src/Node.php:208
 msgid "Transitions this step can no longer fire were removed."
 msgstr "As transições que esta etapa não pode mais disparar foram removidas."
 
@@ -591,15 +608,15 @@ msgstr "A etapa \"%s\" tem uma transição para a etapa de início."
 msgid "Step \"%1$s\" cannot fire its \"%2$s\" transition."
 msgstr "A etapa \"%1$s\" não pode disparar sua transição \"%2$s\"."
 
-#: src/Definition/StepConfiguration.php:104
+#: src/Definition/StepConfiguration.php:109
 msgid "The step needs an actor."
 msgstr "A etapa precisa de um responsável."
 
-#: src/Definition/StepConfiguration.php:109
+#: src/Definition/StepConfiguration.php:114
 msgid "A task step needs a task template."
 msgstr "Uma etapa de tarefa precisa de um modelo de tarefa."
 
-#: src/Definition/StepConfiguration.php:124
+#: src/Definition/StepConfiguration.php:129
 msgid "The step type is invalid."
 msgstr "O tipo da etapa é inválido."
 
@@ -608,19 +625,3 @@ msgid "Workflow step"
 msgid_plural "Workflow steps"
 msgstr[0] "Etapa do workflow"
 msgstr[1] "Etapas do workflow"
-
-#: src/Enum/ActorType.php:45
-msgid "Requester"
-msgstr "Requerente"
-
-#: src/Engine/ActorResolver.php:89
-msgid "The requester of the ticket is deleted or inactive."
-msgstr "O requerente do chamado foi excluído ou está inativo."
-
-#: src/View/DiagramView.php:227
-msgid "Do not change"
-msgstr "Não alterar"
-
-#: src/View/DiagramView.php:316
-msgid "Ticket status"
-msgstr "Status do chamado"
