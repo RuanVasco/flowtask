@@ -31,6 +31,7 @@
 namespace GlpiPlugin\Flowtask\Engine;
 
 use CommonDBTM;
+use GlpiPlugin\Flowtask\Enum\ActorType;
 use GlpiPlugin\Flowtask\Enum\NodeType;
 use GlpiPlugin\Flowtask\Node;
 use GlpiPlugin\Flowtask\Support\Fields;
@@ -64,15 +65,21 @@ final class StepItemFactory
             return __('The task template of the step is missing.', 'flowtask');
         }
 
-        $task = new TicketTask();
-        $id   = $task->add([
+        $input = [
             'tickets_id'        => $ticket->getID(),
             '_tasktemplates_id' => $template_id,
             // The step decides who does the task and when it is done, not the template.
             'state'             => Planning::TODO,
             'users_id_tech'     => $actor->getUserId(),
             'groups_id_tech'    => $actor->getGroupId(),
-        ]);
+        ];
+        // The requester only sees public tasks (spec 003).
+        if (ActorType::tryFrom(Fields::string($node->fields, 'actor_type')) === ActorType::REQUESTER) {
+            $input['is_private'] = 0;
+        }
+
+        $task = new TicketTask();
+        $id   = $task->add($input);
 
         return $id !== false ? $task : __('The ticket task could not be created.', 'flowtask');
     }

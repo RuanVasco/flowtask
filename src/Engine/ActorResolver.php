@@ -53,6 +53,7 @@ final readonly class ActorResolver
         return match (ActorType::tryFrom(Fields::string($node->fields, 'actor_type'))) {
             ActorType::USER              => $this->resolveUser(Fields::int($node->fields, 'users_id')),
             ActorType::GROUP             => $this->resolveGroup(Fields::int($node->fields, 'groups_id')),
+            ActorType::REQUESTER         => $this->resolveRequester($ticket),
             ActorType::REQUESTER_MANAGER => $this->resolveManager($ticket, max(1, Fields::int($node->fields, 'manager_level'))),
             null                         => ActorResolution::failed(__('The step has no actor.', 'flowtask')),
         };
@@ -70,6 +71,22 @@ final readonly class ActorResolver
         return $groups_id > 0 && (new Group())->getFromDB($groups_id)
             ? ActorResolution::group($groups_id)
             : ActorResolution::failed(__('The group of the step is missing.', 'flowtask'));
+    }
+
+    /**
+     * The first requester user of the ticket (spec 003). The missing manager
+     * behavior does not apply: without a requester user the step blocks.
+     */
+    private function resolveRequester(Ticket $ticket): ActorResolution
+    {
+        $users_id = $this->getFirstRequester($ticket->getID());
+        if ($users_id === 0) {
+            return ActorResolution::failed(__('The ticket has no requester user.', 'flowtask'));
+        }
+
+        return $this->loadActiveUser($users_id) instanceof User
+            ? ActorResolution::user($users_id)
+            : ActorResolution::failed(__('The requester of the ticket is deleted or inactive.', 'flowtask'));
     }
 
     private function resolveManager(Ticket $ticket, int $level): ActorResolution

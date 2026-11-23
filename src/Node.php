@@ -86,6 +86,7 @@ class Node extends CommonDBChild
 
         return match ($actor) {
             null                          => '',
+            ActorType::REQUESTER          => $actor->label(),
             ActorType::REQUESTER_MANAGER  => sprintf(
                 __('%1$s (level %2$d)', 'flowtask'),
                 $actor->label(),
