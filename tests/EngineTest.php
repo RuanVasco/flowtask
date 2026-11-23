@@ -470,51 +470,6 @@ final class EngineTest extends DbTestCase
         });
     }
 
-    private function getActiveTask(Instance $instance): TicketTask
-    {
-        $step = InstanceStep::getActiveForInstance($instance->getID());
-        $this->assertInstanceOf(InstanceStep::class, $step);
-        $this->assertSame(TicketTask::class, $step->fields['itemtype']);
-
-        $task = new TicketTask();
-        $this->assertTrue($task->getFromDB((int) $step->fields['items_id']));
-
-        return $task;
-    }
-
-    private function getActiveValidation(Instance $instance): TicketValidation
-    {
-        $step = InstanceStep::getActiveForInstance($instance->getID());
-        $this->assertInstanceOf(InstanceStep::class, $step);
-        $this->assertSame(TicketValidation::class, $step->fields['itemtype']);
-
-        $validation = new TicketValidation();
-        $this->assertTrue($validation->getFromDB((int) $step->fields['items_id']));
-
-        return $validation;
-    }
-
-    /**
-     * @return list<string> Step statuses, oldest first
-     */
-    private function getStepStatuses(Instance $instance): array
-    {
-        /** @var DBmysql $DB */
-        global $DB;
-
-        $statuses = [];
-        foreach ($DB->request([
-            'SELECT' => 'status',
-            'FROM'   => InstanceStep::getTable(),
-            'WHERE'  => [InstanceStep::$items_id => $instance->getID()],
-            'ORDER'  => 'id',
-        ]) as $row) {
-            $statuses[] = (string) $row['status'];
-        }
-
-        return $statuses;
-    }
-
     private function getLastStepNode(Instance $instance): Node
     {
         $step = new InstanceStep();
@@ -527,10 +482,5 @@ final class EngineTest extends DbTestCase
         $this->assertInstanceOf(Node::class, $node);
 
         return $node;
-    }
-
-    private function assertStuckMessage(string $reason): void
-    {
-        $this->hasSessionMessages(WARNING, [htmlescape('The workflow of this ticket is stuck: ' . $reason)]);
     }
 }
