@@ -33,6 +33,7 @@ namespace GlpiPlugin\Flowtask\Engine;
 use CommonDBTM;
 use CommonITILValidation;
 use DBmysql;
+use GlpiPlugin\Flowtask\Definition\StepConfiguration;
 use GlpiPlugin\Flowtask\Enum\ActorType;
 use GlpiPlugin\Flowtask\Enum\InstanceStatus;
 use GlpiPlugin\Flowtask\Enum\MissingManagerBehavior;
@@ -112,6 +113,36 @@ final readonly class WorkflowEngine
         if (in_array('state', $task->updates, true) && Fields::int($task->fields, 'state') === Planning::DONE) {
             $this->advance(TicketTask::class, $task->getID(), TransitionCondition::COMPLETED);
         }
+    }
+
+    /**
+     * Completing the task of an active step leaves the ticket status to the
+     * engine (spec 003): GLPI would otherwise reopen a ticket the next step
+     * has just put on pending, since it handles the parent status of a task
+     * after the update hooks have run.
+     */
+    public function prepareTaskUpdate(TicketTask $task): void
+    {
+        if (
+            !is_array($task->input)
+            || Fields::int($task->input, 'state') !== Planning::DONE
+            || Fields::int($task->fields, 'state') === Planning::DONE
+        ) {
+            return;
+        }
+
+        $step     = InstanceStep::getActiveForItem(TicketTask::class, $task->getID());
+        $instance = new Instance();
+        if (
+            !$step instanceof InstanceStep
+            || !$instance->getFromDB(Fields::int($step->fields, InstanceStep::$items_id))
+            || $instance->getStatus() !== InstanceStatus::RUNNING
+        ) {
+            return;
+        }
+
+        unset($task->input['pending']);
+        $task->input['_no_reopen'] = true;
     }
 
     /**
@@ -218,6 +249,11 @@ final readonly class WorkflowEngine
 
         $step = InstanceStep::getActiveForInstance($instance->getID());
         $step?->update(['id' => $step->getID(), 'status' => StepStatus::CANCELLED->value, 'date_end' => Session::getCurrentTime()]);
+
+        // A pending step that got its item put the ticket on hold (spec 003).
+        if ($step instanceof InstanceStep && Fields::int($step->fields, 'items_id') > 0) {
+            $this->releaseTicket(Fields::int($instance->fields, Instance::$items_id), $step->getNode());
+        }
 
         return $instance->update([
             'id'       => $instance->getID(),
@@ -350,7 +386,7 @@ final readonly class WorkflowEngine
 
         if ($type === NodeType::END) {
             $this->closeStep($step, StepStatus::DONE, null);
-            $this->complete($instance, $ticket, $node);
+            $this->complete($instance, $ticket, $node, $step);
 
             return null;
         }
@@ -388,11 +424,83 @@ final readonly class WorkflowEngine
             'users_id'  => $actor->getUserId(),
             'groups_id' => $actor->getGroupId(),
         ]);
+        // After the item: GLPI may change the status when a task is added.
+        $this->applyTicketStatus($instance, $step, $ticket->getID(), Fields::int($node->fields, 'ticket_status'));
 
         return null;
     }
 
-    private function complete(Instance $instance, Ticket $ticket, Node $end): void
+    /**
+     * Sets the status of the entered step on the ticket, or takes the ticket
+     * off pending when the step left before it held it (spec 003, AC-7 and
+     * AC-8). Done by the engine whatever the status lifecycle of the current
+     * profile, as the solution of an end step (AC-9).
+     *
+     * @param int $status Ticket status of the step, 0 when it does not change it
+     */
+    private function applyTicketStatus(Instance $instance, InstanceStep $step, int $tickets_id, int $status): void
+    {
+        if (!in_array($status, StepConfiguration::TICKET_STATUSES, true)) {
+            $this->releaseTicket($tickets_id, $this->findPreviousNode($instance, $step));
+
+            return;
+        }
+
+        $this->setTicketStatus($tickets_id, $status);
+    }
+
+    /**
+     * A pending step only holds the ticket while it waits: once it is left,
+     * a ticket still pending goes back to processing. A ticket put on pending
+     * by hand is left alone.
+     */
+    private function releaseTicket(int $tickets_id, ?Node $left): void
+    {
+        if (!$left instanceof Node || Fields::int($left->fields, 'ticket_status') !== Ticket::WAITING) {
+            return;
+        }
+
+        $ticket = new Ticket();
+        if ($ticket->getFromDB($tickets_id) && Fields::int($ticket->fields, 'status') === Ticket::WAITING) {
+            $this->setTicketStatus($tickets_id, Ticket::ASSIGNED);
+        }
+    }
+
+    /**
+     * Updates a ticket object of its own, not the one a GLPI hook runs for,
+     * which keeps the changes of the operation that fired the hook.
+     */
+    private function setTicketStatus(int $tickets_id, int $status): void
+    {
+        $ticket = new Ticket();
+        if ($ticket->getFromDB($tickets_id) && Fields::int($ticket->fields, 'status') !== $status) {
+            $ticket->update(['id' => $tickets_id, 'status' => $status]);
+        }
+    }
+
+    /**
+     * Step of the last step the instance went through before this one.
+     * Skipped steps do not count: they never held the ticket.
+     */
+    private function findPreviousNode(Instance $instance, InstanceStep $step): ?Node
+    {
+        $previous = new InstanceStep();
+        if (!$previous->getFromDBByRequest([
+            'WHERE' => [
+                InstanceStep::$items_id => $instance->getID(),
+                'status'                => StepStatus::DONE->value,
+                'id'                    => ['<', $step->getID()],
+            ],
+            'ORDER' => 'id DESC',
+            'LIMIT' => 1,
+        ])) {
+            return null;
+        }
+
+        return $previous->getNode();
+    }
+
+    private function complete(Instance $instance, Ticket $ticket, Node $end, InstanceStep $step): void
     {
         $instance->update([
             'id'       => $instance->getID(),
@@ -402,6 +510,8 @@ final readonly class WorkflowEngine
 
         $ticket->getFromDB($ticket->getID());
         if (Fields::int($end->fields, 'solve_ticket') !== 1 || $ticket->isSolved(true)) {
+            $this->applyTicketStatus($instance, $step, $ticket->getID(), 0);
+
             return;
         }
 
@@ -414,6 +524,7 @@ final readonly class WorkflowEngine
             )),
         ]);
         if ($solved === false) {
+            $this->applyTicketStatus($instance, $step, $ticket->getID(), 0);
             Session::addMessageAfterRedirect(
                 __s('The workflow ended but the ticket could not be solved.', 'flowtask'),
                 false,

@@ -82,6 +82,9 @@ function plugin_init_flowtask(): void
         TicketTask::class       => TicketEvents::onTaskUpdate(...),
         TicketValidation::class => TicketEvents::onValidationUpdate(...),
     ];
+    $PLUGIN_HOOKS[Hooks::POST_PREPAREUPDATE]['flowtask'] = [
+        TicketTask::class => TicketEvents::onTaskPrepareUpdate(...),
+    ];
     $PLUGIN_HOOKS[Hooks::PRE_ITEM_PURGE]['flowtask'] = [
         Ticket::class           => DeletionGuard::beforeTicketPurge(...),
         TicketTask::class       => DeletionGuard::beforeItemPurge(...),

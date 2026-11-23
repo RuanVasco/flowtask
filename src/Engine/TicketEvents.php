@@ -67,6 +67,11 @@ final class TicketEvents
         DeletionGuard::afterTicketPurge($ticket);
     }
 
+    public static function onTaskPrepareUpdate(TicketTask $task): void
+    {
+        self::engine()->prepareTaskUpdate($task);
+    }
+
     public static function onTaskUpdate(TicketTask $task): void
     {
         self::engine()->handleTaskUpdate($task);
