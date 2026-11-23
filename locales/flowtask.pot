@@ -606,3 +606,19 @@ msgid "Workflow step"
 msgid_plural "Workflow steps"
 msgstr[0] ""
 msgstr[1] ""
+
+#: src/Enum/ActorType.php:45
+msgid "Requester"
+msgstr ""
+
+#: src/Engine/ActorResolver.php:89
+msgid "The requester of the ticket is deleted or inactive."
+msgstr ""
+
+#: src/View/DiagramView.php:227
+msgid "Do not change"
+msgstr ""
+
+#: src/View/DiagramView.php:316
+msgid "Ticket status"
+msgstr ""
